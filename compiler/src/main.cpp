@@ -2,11 +2,9 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-#include <stdio.h>
-
-int main(void)
+#include <iostream>
+int main(int argc, char *argv[])
 {
-	printf("Hello World!");
-
+	std::cout << "Hello world!\n";
 	return 0;
 }

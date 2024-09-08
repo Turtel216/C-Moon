@@ -9,16 +9,31 @@ This project is not intended to express any religious beliefs. Its primary goal 
 ### Content Table
 ...
 
-# Overview
+## Overview
 
-The Sinners C programming language is very closely related to the [C programming language](https://en.wikipedia.org/wiki/C_(programming_language)) which means it is a low level procedural systems programming language with a static type system and manual memory management. The diffrences to C mainly manifest in the naming of keywords which are themed around Satanic/Demonic vocabulary.
+The Sinners C programming language is very closely related to the [C programming language](https://en.wikipedia.org/wiki/C_(programming_language)) which means it is a low level procedural systems programming language with a static type system and manual memory management. The diffrences to C mainly manifest in the naming of keywords which are themed around Satanic/Demonic vocabulary. In contrast to Holy C, Sinners C compiles to an executable that runs natively on x86 architectures
 
-# The GNG Compiler
+### Types
+
+- Integer **amon**
+- Chars **ose**
+- Float **gaap**
+- Double **lilith**
+
+### Declarations
+
+### Control Float
+
+### Operators
+
+### Standard Library
+
+## The GNG Compiler
 
 The Goat Not Gnu Compiler(GNG)...
 
-# Tooling
+## Tooling
 
 - Code editor with syntax highlighting: [Heaven's Door](https://github.com/Turtel216/Heavens-Door)
 
-# Contributing
+## Contributing

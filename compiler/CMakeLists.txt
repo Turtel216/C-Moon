@@ -3,7 +3,7 @@ project(SinnersC)
 
 # enable_testing()
 
-add_executable ( gng src/main.c )
+add_executable ( gng src/main.cpp )
 
 #Tests
 # add_executable ( scanner_test test/scanner_test.cpp src/Xanadu.cpp src/Types/Token.cpp src/Types/Literal.cpp src/Scanner/Scanner.cpp src/Parser/Parser.cpp)
