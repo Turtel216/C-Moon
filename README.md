@@ -2,6 +2,9 @@
 
 A reimplementation of the C programming language and a parody of Holy-C
 
+> [!CAUTION]
+> The Compiler and the language are still in early development and are not usable yet
+
 ### Disclaimer
 
 This project is not intended to express any religious beliefs. Its primary goal is to create a compiler for a C-like language. Any religious references are made purely as a parody of the Holy-C programming language.
@@ -14,7 +17,7 @@ This project is not intended to express any religious beliefs. Its primary goal 
     * [Declarations](#declarations)
     * [Control Flow](#control)
     * [Operators](#operators)
-- [The GNG Compiler](#compiler)
+- [The GSC Compiler](#compiler)
 - [Building The Compiler](#build)
 - [Tooling](#tooling)
 
@@ -51,11 +54,11 @@ The Sinners C programming language is very closely related to the [C programming
 
 <a name="compiler"/>
 
-## The GNG Compiler
+## The GSC Compiler
 
-The Goat Not Gnu Compiler(GNG)...
+The The Goats Sinners-C Compiler(gscc)
 
-<a name="compiler"/>
+<a name="build"/>
 
 # Building The Compiler
 
