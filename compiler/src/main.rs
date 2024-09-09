@@ -2,6 +2,16 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+mod lexer;
+mod parser;
+
+//TODO write compiler driver
+
 fn main() {
-    println!("Hello, world!");
+    let mut scanner = lexer::Scanner::new("void int 123 ( ) { } name return ;");
+    let tokens = scanner.scan_source();
+
+    for token in tokens {
+        println!("{}", token);
+    }
 }
