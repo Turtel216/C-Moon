@@ -8,7 +8,7 @@ mod parser;
 //TODO write compiler driver
 
 fn main() {
-    let mut scanner = lexer::Scanner::new("void int 123 ( ) { } name return ;");
+    let mut scanner = lexer::Tokenizer::new("void int 123 ( ) { } name return ;");
     let tokens = scanner.scan_source();
 
     for token in tokens {

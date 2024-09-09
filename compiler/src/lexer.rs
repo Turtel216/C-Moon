@@ -36,7 +36,8 @@ impl fmt::Display for TokenType {
     }
 }
 
-pub struct Scanner<'s> {
+// Struct for tokenizing source string
+pub struct Tokenizer<'s> {
     tokens: Vec<TokenType>, // Vector holding generated tokens
     source: &'s str,        // Source string to be scanner
     start: usize,           // Start of current lexeme
@@ -44,10 +45,10 @@ pub struct Scanner<'s> {
     line: usize,
 }
 
-impl<'s> Scanner<'s> {
+impl<'s> Tokenizer<'s> {
     // Instantiate The Scanner
     pub fn new(source: &'s str) -> Self {
-        Scanner {
+        Self {
             tokens: Vec::new(),
             source,
             start: 0,
@@ -56,6 +57,7 @@ impl<'s> Scanner<'s> {
         }
     }
 
+    // Scan the source string and return a Vector holding the TokenTypes
     pub fn scan_source(&mut self) -> &Vec<TokenType> {
         // Tokenize the source string
         // and add each token to the token vector
@@ -66,6 +68,8 @@ impl<'s> Scanner<'s> {
         return &self.tokens;
     }
 
+    // Scan the current selection of the source string and add the poper token to the TokenType
+    // Vectror
     fn scan_token(&mut self) -> () {
         // Remove all white space
         self.skip_whitespace();
@@ -221,9 +225,12 @@ mod tests {
 
     #[test]
     fn test_lexer() {
-        let mut scanner = lexer::Scanner::new("void int 123 ( ) { } name return ;");
+        // Initialise lexer
+        let mut scanner = lexer::Tokenizer::new("void int 123 ( ) { } name return ;");
+        // Generate vector of TokenTypes
         let tokens = scanner.scan_source();
 
+        // Vector holding the expected TokenTypes
         let mut expected_tokens = vec![
             TokenType::VoidKeyword,
             TokenType::IntKeyword,
@@ -237,6 +244,7 @@ mod tests {
             TokenType::Semicolon,
         ];
 
+        // Make sure both vectors hold the same amount of TokenTypes
         assert!(tokens.len() == expected_tokens.len());
 
         let mut etoken_iter = expected_tokens.iter_mut(); // Expected Token Iterator
@@ -248,6 +256,8 @@ mod tests {
                 None => panic!("Couldn't get next token"),
             };
 
+            // Assure that the token generated
+            // by the lexer is equal to the expected token
             assert!(token == etoken);
         }
     }
