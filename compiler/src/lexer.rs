@@ -226,22 +226,22 @@ mod tests {
     #[test]
     fn test_lexer() {
         // Initialise lexer
-        let mut scanner = lexer::Tokenizer::new("void int 123 ( ) { } name return ;");
+        let mut scanner = lexer::Tokenizer::new("int main(void) { return 0;}");
         // Generate vector of TokenTypes
         let tokens = scanner.scan_source();
 
         // Vector holding the expected TokenTypes
         let mut expected_tokens = vec![
-            TokenType::VoidKeyword,
             TokenType::IntKeyword,
-            TokenType::Constant(123),
+            TokenType::Identifier("main".to_string()),
             TokenType::OpenParenthesis,
+            TokenType::VoidKeyword,
             TokenType::CloseParenthesis,
             TokenType::OpenBrace,
-            TokenType::CloseBrace,
-            TokenType::Identifier("name".to_string()),
             TokenType::ReturnKeyword,
+            TokenType::Constant(0),
             TokenType::Semicolon,
+            TokenType::CloseBrace,
         ];
 
         // Make sure both vectors hold the same amount of TokenTypes

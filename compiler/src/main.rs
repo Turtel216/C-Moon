@@ -22,8 +22,7 @@ fn main() {
         arg1 = &args[2];
     }
 
-    println!("path: {}", path);
-    println!("arg1: {}", arg1);
+    println!("Path: {}", *path);
 
     if arg1 == "--lex" {
         run_lexer(&path);
