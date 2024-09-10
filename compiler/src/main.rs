@@ -5,13 +5,38 @@
 mod lexer;
 mod parser;
 
+use std::env;
+use std::fs::File;
+use std::io::{BufReader, Read};
+
 //TODO write compiler driver
 
 fn main() {
-    let mut scanner = lexer::Tokenizer::new("void int 123 ( ) { } name return ;");
-    let tokens = scanner.scan_source();
+    let args: Vec<String> = env::args().collect();
 
-    for token in tokens {
-        println!("{}", token);
+    let mut arg1 = &String::new();
+    let mut path = &String::new();
+
+    if args.len() == 3 {
+        path = &args[1];
+        arg1 = &args[2];
     }
+
+    println!("path: {}", path);
+    println!("arg1: {}", arg1);
+
+    if arg1 == "--lex" {
+        run_lexer(&path);
+    }
+}
+
+fn run_lexer(path: &String) -> () {
+    // Read from file
+    let file = File::open(path).unwrap_or_else(|e| panic!("Can't open file: {e:?}"));
+    let mut buf_reader = BufReader::new(file);
+    let mut source = String::new();
+    let _ = buf_reader.read_to_string(&mut source);
+
+    let mut scanner = lexer::Tokenizer::new(&source);
+    scanner.scan_source();
 }
