@@ -57,7 +57,7 @@ The Sinners C programming language is very closely related to the [C programming
 
 ## Development Overview
 
-For an easier compiler development progress we will start by building a C compiler and later change reserved words to fit the Sinners-C language. The reason for this to make testing easier by cross-checking the results of [GSC Compiler](#compiler) and the [GCC](https://gcc.gnu.org/) Compiler.
+For an easier compiler development process we will start by building a C compiler and later change the reserved words to fit the Sinners-C language. The reason for this is to make testing easier by cross-checking the results of the [GSC Compiler](#compiler) and the [GCC](https://gcc.gnu.org/) Compiler.
 
 <a name="compiler"/>
 
