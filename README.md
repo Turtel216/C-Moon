@@ -17,6 +17,7 @@ This project is not intended to express any religious beliefs. Its primary goal 
     * [Declarations](#declarations)
     * [Control Flow](#control)
     * [Operators](#operators)
+- [Development Overview](#dev)
 - [The GSC Compiler](#compiler)
 - [Building The Compiler](#build)
 - [Tooling](#tooling)
@@ -51,6 +52,12 @@ The Sinners C programming language is very closely related to the [C programming
 <a name="operators"/>
 
 ### Operators
+
+<a name="dev"/>
+
+## Development Overview
+
+For an easier compiler development progress we will start by building a C compiler and later change reserved words to fit the Sinners-C language. The reason for this to make testing easier by cross-checking the results of [GSC Compiler](#compiler) and the [GCC](https://gcc.gnu.org/) Compiler.
 
 <a name="compiler"/>
 
