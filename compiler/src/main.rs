@@ -36,6 +36,7 @@ fn run_lexer(path: &String) -> () {
     let mut source = String::new();
     let _ = buf_reader.read_to_string(&mut source);
 
+    // Run lexer
     let mut scanner = lexer::Tokenizer::new(&source);
     scanner.scan_source();
 }

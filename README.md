@@ -63,7 +63,7 @@ For an easier compiler development process we will start by building a C compile
 
 ## The GSC Compiler
 
-The The Goats Sinners-C Compiler(gscc)
+The Goats Sinners-C Compiler(gscc)
 
 <a name="build"/>
 

@@ -61,7 +61,7 @@ impl<'s> Tokenizer<'s> {
             source,
             start: 0,
             current: 0,
-            line: 0,
+            line: 1,
         }
     }
 
@@ -280,5 +280,16 @@ mod tests {
             // by the lexer is equal to the expected token
             assert!(token == etoken);
         }
+    }
+
+    // This test verifies that the lexer correctly panics when reaching an unexpected token.
+    #[test]
+    #[should_panic(expected = "Lexer error: Could'nt recognise character on line 1")]
+    fn test_lexer_failure() {
+        // Initialise lexer
+        let mut scanner = lexer::Tokenizer::new("int main(void) { return 1@0;}");
+        // Generate vector of TokenTypes
+        // The lexer should panic when reaching the constant '1@0'
+        let _ = scanner.scan_source();
     }
 }
