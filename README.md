@@ -36,6 +36,7 @@ The Sinners C programming language is very closely related to the [C programming
 - Chars **ose**
 - Float **gaap**
 - Double **lilith**
+- Void **gorgon**
 
 <a name="comments"/>
 
