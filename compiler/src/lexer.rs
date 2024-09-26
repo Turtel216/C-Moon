@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 //
-// Lexer for C-Moon Compiler.
+// Lexer for The C-Moon Compiler.
 // This code tokenizes a source string into a series of tokens, allowing the parser to analyze it.
 // Each token corresponds to a keyword, identifier, or symbol (like parentheses or braces).
 // The `Tokenizer` struct holds the scanning logic, and `TokenType` represents the recognized tokens.
