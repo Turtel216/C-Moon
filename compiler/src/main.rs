@@ -40,3 +40,9 @@ fn run_lexer(path: &String) -> () {
     let mut scanner = lexer::Tokenizer::new(&source);
     scanner.scan_source();
 }
+// Copyright 2024 Dimitrios Papakonstantinou. All rights reserved.
+// Copyright 2024 Dimitrios Papakonstantinou. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
