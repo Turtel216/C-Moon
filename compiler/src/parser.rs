@@ -18,14 +18,16 @@ pub enum Item {
 
 #[derive(Debug, Clone)]
 pub struct ParseNode {
-    children: Vec<Option<ParseNode>>,
+    rchild: Option<Box<ParseNode>>,
+    lchild: Option<Box<ParseNode>>,
     entry: Item,
 }
 
 impl ParseNode {
     pub fn new() -> Self {
         Self {
-            children: Vec::new(),
+            lchild: None,
+            rchild: None,
             entry: Item::Function("program".to_string()),
         }
     }
@@ -50,7 +52,8 @@ impl<'p> Parser<'p> {
 
     fn parse_statement(&mut self) -> ParseNode {
         self.expect(TokenType::ReturnKeyword);
-        let return_val = self.parse_exp(); //TODO
+        let return_val = self.parse_exp();
+
         self.expect(TokenType::Semicolon);
 
         return return_val;
@@ -69,7 +72,8 @@ impl<'p> Parser<'p> {
 
         ParseNode {
             entry: item,
-            children: vec![None, None],
+            lchild: None,
+            rchild: None,
         }
     }
 
@@ -94,13 +98,7 @@ impl<'p> Parser<'p> {
 impl<'p> Display for Parser<'p> {
     //TODO
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.nodes.children.iter().for_each(|child| {
-            match child {
-                Some(item) => write!(f, "{}", item.entry).expect("Couldn't print child"),
-                None => write!(f, "").expect("Couldn't print empty child"),
-            };
-        });
-        Ok(())
+        todo!()
     }
 }
 
