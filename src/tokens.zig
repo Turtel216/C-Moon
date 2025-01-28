@@ -1,68 +1,38 @@
-const std = @import("std");
-
-pub const TokenType = enum {
-    ILLEGAL,
-    EOF,
+pub const Token = union(enum) {
+    Illegal,
+    Eof,
+    Program,
 
     // Identifiers & literals
-    STRING,
+    String,
+    Identifier: void,
 
     // Operators
-    EQUAL,
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
+    Equal,
+    Plus,
+    Minus,
+    Star,
+    Slash,
 
-    BANG,
-    LT,
-    GT,
-    EQ,
-    NEQ,
+    Bang,
+    Lt,
+    Gt,
+    Eq,
+    Neq,
 
     // Delimiters
-    COMMA,
-    SEMI,
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
-    SEMICOLON,
+    Comma,
+    Semi,
+    Lparen,
+    Rparen,
+    Lbrace,
+    Rbrace,
+    Semicolon,
 
     // Keywords
-    IF,
-    ELSE,
-    RETURN,
-    INT,
-    VOID,
+    If,
+    Else,
+    Return,
+    Int: isize,
+    Void,
 };
-
-pub const Token = struct {
-    kind: TokenType = .ILLEGAL,
-    literal: []const u8 = "",
-
-    pub fn init(kind: TokenType, literal: []const u8) Token {
-        return Token{
-            .kind = kind,
-            .literal = literal,
-        };
-    }
-};
-
-pub const Keywords = [_]Token{
-    Token.init(.IF, "if"),
-    Token.init(.ELSE, "else"),
-    Token.init(.RETURN, "return"),
-    Token.init(.INT, "int"),
-    Token.init(.INT, "void"),
-};
-
-pub fn lookupIdentifier(ident: []const u8) TokenType {
-    for (Keywords) |keyword| {
-        if (std.mem.eql(u8, ident, keyword.literal)) {
-            return keyword.kind;
-        }
-    }
-
-    return .IDENT;
-}

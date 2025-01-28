@@ -1,9 +1,12 @@
 const std = @import("std");
-const tokens = @import("tokens");
+const tokens = @import("tokens.zig");
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+
+    const token: tokens.Token = tokens.Token{ .Int = 0 };
+    _ = token;
 
     // stdout is for the actual output of your application, for example if you
     // are implementing gzip, then only the compressed bytes should be sent to
