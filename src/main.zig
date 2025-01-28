@@ -1,5 +1,6 @@
 const std = @import("std");
-const tokens = @import("tokens.zig");
+const tokens = @import("token.zig");
+const lexer = @import("lexer.zig");
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
@@ -7,6 +8,9 @@ pub fn main() !void {
 
     const token: tokens.Token = tokens.Token{ .Int = 0 };
     _ = token;
+
+    const lex = lexer.Lexer.init("someInput");
+    _ = lex;
 
     // stdout is for the actual output of your application, for example if you
     // are implementing gzip, then only the compressed bytes should be sent to

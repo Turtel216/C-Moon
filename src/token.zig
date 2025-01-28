@@ -4,10 +4,11 @@ pub const Token = union(enum) {
     Program,
 
     // Identifiers & literals
-    String,
-    Identifier: void,
+    String: []const u8,
+    Identifier: []const u8,
 
     // Operators
+    EqualEqual,
     Equal,
     Plus,
     Minus,
@@ -17,7 +18,6 @@ pub const Token = union(enum) {
     Bang,
     Lt,
     Gt,
-    Eq,
     Neq,
 
     // Delimiters
