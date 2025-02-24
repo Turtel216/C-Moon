@@ -1,18 +1,79 @@
 #include "lexer.h"
 
+#include <cctype>
+#include <cstddef>
 #include <optional>
 
 // Start the lexing process. Returns the tokenized input string.
-auto start() noexcept -> std::vector<Token>;
+auto Lexer::start() noexcept -> std::vector<Token> {
+  while (!is_at_end()) {
+    std::optional<Token> token_opt = next_token();
+    if (token_opt.has_value()) {
+      tokens.push_back(token_opt.value());
+      advance();
+    }  // if
+    else {
+      // TODO: Print lexer error message
+    }  // else
+  }  // while
 
-// Moves the lexer and returns the next recognized token.
-[[nodiscard]] auto next_token() noexcept -> Token;
+  return tokens;
+}  // start
+
+// Returns the next recognized token.
+[[nodiscard]] auto Lexer::next_token() noexcept -> std::optional<Token> {
+  skip_whitespace();
+
+  char curr_char = peek();
+
+  switch (curr_char) {
+    case ';':
+      return Token(";", TokenType::SEMICOLON);
+      break;
+    case '(':
+      return Token("(", TokenType::OPEN_PARENTHESIS);
+      break;
+    case ')':
+      return Token(")", TokenType::CLOSED_PARENTHESIS);
+      break;
+    case '}':
+      return Token("{", TokenType::OPEN_BRACE);
+      break;
+    case '{':
+      return Token("}", TokenType::CLOSED_BRACE);
+      break;
+    default:
+      if (std::isalpha(curr_char)) {
+        if (std::isdigit(curr_char)) {
+          return lex_number();
+          break;
+        }  // if
+
+        return lex_identifier();
+        break;
+      }  // if
+
+      return std::nullopt;
+  }  // switch
+}  // next_token
 
 // Tokenize a number
-[[nodiscard]] auto lex_number() noexcept -> Token;
+[[nodiscard]] auto Lexer::lex_number() noexcept -> Token {
+  lexeme_start = pos;
+  size_t sub_len = 0;
+  while (std::isdigit(peek())) {
+    ++sub_len;
+    advance();
+  }  // while
+
+  std::string lexeme = input.substr(lexeme_start, sub_len);
+  return Token(lexeme, TokenType::CONSTANT);
+}  // lex_number
 
 // Tokenize an identifier
-[[nodiscard]] auto lex_identifier() noexcept -> Token;
+[[nodiscard]] auto Lexer::lex_identifier() noexcept -> Token {
+  return Token("", TokenType::IDENTIFIER);
+}
 
 // Check if the given string is a keyword. Return option of either the keyword
 // token or an empty optional

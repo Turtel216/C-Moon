@@ -32,7 +32,7 @@ class Lexer {
   std::vector<Token> tokens;
 
   // Moves the lexer and returns the next recognized token.
-  [[nodiscard]] auto next_token() noexcept -> Token;
+  [[nodiscard]] auto next_token() noexcept -> std::optional<Token>;
 
   // Tokenize a number
   [[nodiscard]] auto lex_number() noexcept -> Token;
