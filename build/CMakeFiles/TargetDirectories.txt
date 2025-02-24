@@ -1,0 +1,4 @@
+/home/dimitrios/Documents/repos/cmoon/build/CMakeFiles/cm.dir
+/home/dimitrios/Documents/repos/cmoon/build/CMakeFiles/test.dir
+/home/dimitrios/Documents/repos/cmoon/build/CMakeFiles/edit_cache.dir
+/home/dimitrios/Documents/repos/cmoon/build/CMakeFiles/rebuild_cache.dir

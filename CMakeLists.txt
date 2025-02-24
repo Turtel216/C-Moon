@@ -3,7 +3,7 @@ project(cmoon)
 
 enable_testing()
 
-add_executable ( cm src/main.c )
+add_executable ( cm src/main.cpp )
 
 #Tests
 # add_executable ()
