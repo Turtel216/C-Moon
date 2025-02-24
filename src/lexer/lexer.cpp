@@ -1,5 +1,7 @@
 #include "lexer.h"
 
+#include <optional>
+
 // Start the lexing process. Returns the tokenized input string.
 auto start() noexcept -> std::vector<Token>;
 
@@ -12,8 +14,10 @@ auto start() noexcept -> std::vector<Token>;
 // Tokenize an identifier
 [[nodiscard]] auto lex_identifier() noexcept -> Token;
 
-// Check if the given string is a keyword. Return true if str is a keyword.
-auto check_keyword(std::string& str) noexcept -> const bool;
+// Check if the given string is a keyword. Return option of either the keyword
+// token or an empty optional
+[[nodiscard]] auto match_keyword(std::string& str) noexcept
+    -> const std::optional<Token>;
 
 // peek returns the current character specified by `pos`. Returns 0
 // if the end of input string is reached.

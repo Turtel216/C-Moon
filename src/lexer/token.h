@@ -21,6 +21,11 @@ enum TokenType {
 struct Token {
   std::string lexeme;
   TokenType type;
+
+  Token() = delete;  // Default Constructor
+
+  Token(std::string lexeme, TokenType type) noexcept
+      : lexeme(lexeme), type(type) {}  // Constructor
 };  // Token
 
 #endif  // TOKEN_H_
