@@ -1,27 +1,28 @@
 #ifndef LEXER_H_
 #define LEXER_H_
 
-#include "token.h"
 #include <cstddef>
 #include <string>
 #include <vector>
 
+#include "token.h"
+
 // The Lexer generates an array of tokens from a given input string
 class Lexer {
-public:
+ public:
   // Input string that should be tokenized
   std::string input;
 
   // Initialises the lexer
   Lexer(std::string input)
-      : input(input), pos(0), lexeme_start(0) {} // Constructor
+      : input(input), pos(0), lexeme_start(0) {}  // Constructor
 
-  Lexer() = delete; // Default constructor
+  Lexer() = delete;  // Default constructor
 
   // Start the lexing process. Returns the tokenized input string.
   auto start() noexcept -> std::vector<Token>;
 
-private:
+ private:
   // Current position(index) of the lexer.
   size_t pos;
   // Start of the current lexeme
@@ -30,16 +31,16 @@ private:
   std::vector<Token> tokens;
 
   // Moves the lexer and returns the next recognized token.
-  auto next_token() noexcept -> Token;
+  [[nodiscard]] auto next_token() noexcept -> Token;
 
   // Tokenize a number
-  auto lex_number() noexcept -> Token;
+  [[nodiscard]] auto lex_number() noexcept -> Token;
 
   // Tokenize an identifier
-  auto lex_identifier() noexcept -> Token;
+  [[nodiscard]] auto lex_identifier() noexcept -> Token;
 
   // Check if the given string is a keyword. Return true if str is a keyword.
-  auto check_keyword(std::string &str) noexcept -> const bool;
+  auto check_keyword(std::string& str) noexcept -> const bool;
 
   // peek returns the current character specified by `pos`. Returns 0
   // if the end of input string is reached.
@@ -64,6 +65,6 @@ private:
   // Returns true if the lexer reached the end of the input string.
   // Returns false otherwise
   auto inline __attribute__((always_inline)) is_at_end() noexcept -> bool const;
-}; // Lexer
+};  // Lexer
 
-#endif // LEXER_H_
+#endif  // LEXER_H_
