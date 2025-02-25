@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstddef>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <string>
@@ -19,11 +20,15 @@ auto Lexer::start() noexcept -> std::vector<Token> {
   while (!is_at_end()) {
     std::optional<Token> token_opt = next_token();
     if (token_opt.has_value()) {
+      std::cout << "Add token" << "\n";
       tokens.push_back(token_opt.value());
       advance();
     }  // if
     else {
-      // TODO: Print lexer error message
+      // TODO: Print lexer error message and handle error properly
+      // Consider throwing exception
+      std::cout << "LEXER ERROR!!!!!!!!!" << "\n";
+      return tokens;
     }  // else
   }  // while
 

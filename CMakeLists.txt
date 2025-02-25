@@ -3,7 +3,7 @@ project(cmoon)
 
 enable_testing()
 
-add_executable ( cm src/main.cpp src/lexer/lexer.cpp )
+add_executable ( cm src/main.cpp src/lexer/lexer.cpp src/lexer/token.cpp)
 
 #Tests
 # add_executable ()

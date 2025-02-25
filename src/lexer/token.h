@@ -26,6 +26,9 @@ struct Token {
 
   Token(std::string lexeme, TokenType type) noexcept
       : lexeme(lexeme), type(type) {}  // Constructor
+
+  // Pretty printer for Token type
+  auto print() noexcept -> std::string const;
 };  // Token
 
 #endif  // TOKEN_H_
