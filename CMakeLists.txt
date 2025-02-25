@@ -7,12 +7,14 @@ include(CTest)
 # Source files
 set(SRC_FILES
     src/main.cpp
+    src/errors/errors.cpp
     src/lexer/lexer.cpp
     src/lexer/token.cpp
 )
 
 # Library for lexer
 add_library(lexer_lib
+    src/errors/errors.cpp
     src/lexer/lexer.cpp
     src/lexer/token.cpp
 )
@@ -30,7 +32,7 @@ endif()
 
 # C++ standard
 set_target_properties(cm lexer_lib lexer_test PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )

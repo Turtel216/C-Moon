@@ -12,16 +12,17 @@
 class lexer {
  public:
   // Input string that should be tokenized
-  std::string input;
+  const std::string& input;
 
   // Initialises the lexer
-  lexer(std::string input)
+  lexer(const std::string& input)
       : input(input), pos(0), lexeme_start(0) {}  // Constructor
 
   lexer() = delete;  // Default constructor
 
+  // TODO: Change return type to either return the vector or the lexer_error
   // Start the lexing process. Returns the tokenized input string.
-  auto start() noexcept -> std::vector<token>;
+  [[nodiscard]] auto start() noexcept -> std::vector<token>;
 
  private:
   // Current position(index) of the lexer.

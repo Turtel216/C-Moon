@@ -16,7 +16,7 @@ static const std::map<std::string, token> keywords{
     {"return", token("return", TokenType::RETURN_KEYWORD)}};
 
 // Start the lexing process. Returns the tokenized input string.
-auto lexer::start() noexcept -> std::vector<token> {
+[[nodiscard]] auto lexer::start() noexcept -> std::vector<token> {
   while (!is_at_end()) {
     std::optional<token> token_opt = next_token();
     if (token_opt.has_value()) {
