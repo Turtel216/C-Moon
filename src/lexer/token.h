@@ -14,7 +14,7 @@ enum TokenType {
   CLOSED_BRACE,        // Represents '}'.
   CONSTANT,            // Represents numeric constants (e.g., 123).
   SEMICOLON,           // Represents ';'.
-  RETURNKEYWORD,       // Represents the 'return' keyword.
+  RETURN_KEYWORD,      // Represents the 'return' keyword.
 };  // TokenType
 
 // Token recognized by the C-Moon compiler

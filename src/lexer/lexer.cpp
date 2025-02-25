@@ -2,7 +2,17 @@
 
 #include <cctype>
 #include <cstddef>
+#include <map>
 #include <optional>
+#include <string>
+
+#include "token.h"
+
+// Array of C-Moon keywords
+static std::map<std::string, Token> keywords{
+    {"int", Token("int", TokenType::INT_KEYWORD)},
+    {"void", Token("void", TokenType::VOID_KEYWORD)},
+    {"return", Token("return", TokenType::RETURN_KEYWORD)}};
 
 // Start the lexing process. Returns the tokenized input string.
 auto Lexer::start() noexcept -> std::vector<Token> {
@@ -72,13 +82,35 @@ auto Lexer::start() noexcept -> std::vector<Token> {
 
 // Tokenize an identifier
 [[nodiscard]] auto Lexer::lex_identifier() noexcept -> Token {
-  return Token("", TokenType::IDENTIFIER);
-}
+  lexeme_start = pos;
+  size_t sub_len = 0;
+  while (std::isalpha(peek())) {
+    advance();
+  }  // while
+
+  // Get keyword/identifier string
+  std::string lexeme = input.substr(lexeme_start, sub_len);
+
+  // Check if lexeme is a keyword
+  std::optional<Token> keyword_opt = match_keyword(lexeme);
+  if (keyword_opt.has_value()) {
+    return keyword_opt.value();
+  }  // if
+
+  // Not a keyword, return identifier
+  return Token(lexeme, TokenType::IDENTIFIER);
+}  // lex_identifier
 
 // Check if the given string is a keyword. Return option of either the keyword
 // token or an empty optional
 [[nodiscard]] auto match_keyword(std::string& str) noexcept
-    -> const std::optional<Token>;
+    -> const std::optional<Token> {
+  if (auto result = keywords.find(str); result != keywords.end()) {
+    return result->second;
+  }  // if
+
+  return std::nullopt;
+}  // match_keyword
 
 // peek returns the current character specified by `pos`. Returns 0
 // if the end of input string is reached.
@@ -125,8 +157,9 @@ auto Lexer::skip_whitespace() noexcept -> void {
         if (peek_next() == '/') {
           while (peek() != '\n' && !is_at_end()) {
             advance();
-          }  // if
-        } else {
+          }  // while
+        }  // if
+        else {
           return;
         }  // else
         break;
