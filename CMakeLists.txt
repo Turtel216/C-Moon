@@ -1,11 +1,36 @@
 cmake_minimum_required(VERSION 3.30)
-project(cmoon)
+project(cmoon LANGUAGES CXX)
 
-enable_testing()
+# Enable testing
+include(CTest)
 
-add_executable ( cm src/main.cpp src/lexer/lexer.cpp src/lexer/token.cpp)
+# Source files
+set(SRC_FILES
+    src/main.cpp
+    src/lexer/lexer.cpp
+    src/lexer/token.cpp
+)
+
+# Library for lexer
+add_library(lexer_lib
+    src/lexer/lexer.cpp
+    src/lexer/token.cpp
+)
+
+# Main executable
+add_executable(cm ${SRC_FILES})
 
 # Tests
-add_executable (lexer_test src tests/lexer/test.cpp src/lexer/lexer.cpp src/lexer/token.cpp)
+if (BUILD_TESTING)
+    add_executable(lexer_test tests/lexer/test.cpp)
+    target_link_libraries(lexer_test lexer_lib)
 
-add_test(lexer lexer_test)
+    add_test(NAME lexer COMMAND lexer_test)
+endif()
+
+# C++ standard
+set_target_properties(cm lexer_lib lexer_test PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
