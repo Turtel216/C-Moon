@@ -7,7 +7,8 @@
 #include "../../src/lexer/token.h"
 
 int main(int argc, char *argv[]) {
-  std::string test_string = "int  main(void)\n {\n return 0;  \n}";
+  std::string test_string =
+      "//some function \nint  main(void)\n {\n return 0;  \n}";
   std::vector<token> expected_tokens{
       token("int", TokenType::INT_KEYWORD),
       token("main", TokenType::IDENTIFIER),
@@ -22,13 +23,27 @@ int main(int argc, char *argv[]) {
   };
 
   lexer lex(test_string);
-  std::vector<token> actual_tokens = lex.start();
+  cmoon::result<std::vector<token>, cmoon::lexer_error> result = lex.start();
+
+  assert(result.has_value());
+
+  std::vector<token> actual_tokens = result.value();
 
   assert(expected_tokens.size() == actual_tokens.size());
 
   for (size_t i = 0; i < actual_tokens.size(); ++i) {
     assert(expected_tokens[i] == actual_tokens[i]);
   }
+
+  // TODO: Splite these two tests(success and failure) into two source files
+
+  std::string test_string_failure = "int main(void) #";
+  lexer lex_failure(test_string_failure);
+
+  cmoon::result<std::vector<token>, cmoon::lexer_error> result_failure =
+      lex_failure.start();
+
+  assert(!result_failure.has_value());
 
   return EXIT_SUCCESS;
 }

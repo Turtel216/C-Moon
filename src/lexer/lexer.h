@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "../utils/errors/errors.h"
+#include "../utils/result.h"
 #include "token.h"
 
 // The Lexer generates an array of tokens from a given input string
@@ -20,9 +22,10 @@ class lexer {
 
   lexer() = delete;  // Default constructor
 
-  // TODO: Change return type to either return the vector or the lexer_error
-  // Start the lexing process. Returns the tokenized input string.
-  [[nodiscard]] auto start() noexcept -> std::vector<token>;
+  // Start the lexing process. Returns either a vector of the tokenized input
+  // string or an lexer_rror
+  [[nodiscard]] auto start() noexcept
+      -> cmoon::result<std::vector<token>, cmoon::lexer_error>;
 
  private:
   // Current position(index) of the lexer.

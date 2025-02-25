@@ -2,7 +2,6 @@
 
 #include <cctype>
 #include <cstddef>
-#include <iostream>
 #include <map>
 #include <optional>
 #include <string>
@@ -15,8 +14,10 @@ static const std::map<std::string, token> keywords{
     {"void", token("void", TokenType::VOID_KEYWORD)},
     {"return", token("return", TokenType::RETURN_KEYWORD)}};
 
-// Start the lexing process. Returns the tokenized input string.
-[[nodiscard]] auto lexer::start() noexcept -> std::vector<token> {
+// Start the lexing process. Returns either a vector of the tokenized input
+// string or an lexer_rror
+[[nodiscard]] auto lexer::start() noexcept
+    -> cmoon::result<std::vector<token>, cmoon::lexer_error> {
   while (!is_at_end()) {
     std::optional<token> token_opt = next_token();
     if (token_opt.has_value()) {
@@ -24,10 +25,10 @@ static const std::map<std::string, token> keywords{
       advance();
     }  // if
     else {
-      // TODO: Print lexer error message and handle error properly
-      // Consider throwing exception
-      std::cout << "LEXER ERROR!!!!!!!!!" << "\n";
-      return tokens;
+      std::string error_msg =
+          "uncrecognized character";  // TODO: add the missing character to the
+                                      // string
+      return cmoon::lexer_error(error_msg);
     }  // else
   }  // while
 
