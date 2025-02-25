@@ -43,7 +43,7 @@ class Lexer {
   // Check if the given string is a keyword. Return option of either the keyword
   // token or an empty optional
   [[nodiscard]] auto match_keyword(std::string& str) noexcept
-      -> const std::optional<Token>;
+      -> std::optional<Token> const;
 
   // peek returns the current character specified by `pos`. Returns 0
   // if the end of input string is reached.

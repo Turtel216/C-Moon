@@ -103,8 +103,8 @@ auto Lexer::start() noexcept -> std::vector<Token> {
 
 // Check if the given string is a keyword. Return option of either the keyword
 // token or an empty optional
-[[nodiscard]] auto match_keyword(std::string& str) noexcept
-    -> const std::optional<Token> {
+[[nodiscard]] auto Lexer::match_keyword(std::string& str) noexcept
+    -> std::optional<Token> const {
   if (auto result = keywords.find(str); result != keywords.end()) {
     return result->second;
   }  // if
