@@ -5,7 +5,7 @@ enable_testing()
 
 add_executable ( cm src/main.cpp src/lexer/lexer.cpp src/lexer/token.cpp)
 
-#Tests
-# add_executable ()
+# Tests
+add_executable (lexer_test src tests/lexer/test.cpp src/lexer/lexer.cpp src/lexer/token.cpp)
 
-# add_test()
+add_test(lexer lexer_test)

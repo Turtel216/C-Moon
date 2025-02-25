@@ -43,3 +43,8 @@ auto token::print() noexcept -> std::string const {
 
   return "Token lexeme: '" + lexeme + "' Token type: " + type_str;
 }  // print
+
+// Equality operator overload for testing
+auto token::operator==(const token& other) const -> bool {
+  return lexeme == other.lexeme && type == other.type;
+}

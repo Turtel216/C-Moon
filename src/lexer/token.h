@@ -29,6 +29,10 @@ struct token {
 
   // Pretty printer for Token type
   auto print() noexcept -> std::string const;
+
+  // Equality operator overload for testing
+  auto operator==(const token& other) const -> bool;
+
 };  // Token
 
 #endif  // TOKEN_H_
