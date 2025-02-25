@@ -3,7 +3,7 @@
 #include <string>
 
 // Pretty printer for Token type
-auto Token::print() noexcept -> std::string const {
+auto token::print() noexcept -> std::string const {
   std::string type_str;
   switch (type) {
     case TokenType::VOID_KEYWORD:
@@ -30,6 +30,9 @@ auto Token::print() noexcept -> std::string const {
     case TokenType::OPEN_PARENTHESIS:
       type_str = "Open Parenthesis";
       break;
+    case TokenType::CLOSED_PARENTHESIS:
+      type_str = "Closed Parenthesis";
+      break;
     case TokenType::RETURN_KEYWORD:
       type_str = "Return";
       break;
@@ -38,5 +41,5 @@ auto Token::print() noexcept -> std::string const {
       break;
   }  // switch
 
-  return "Token lexeme: " + lexeme + "Token type: " + type_str;
+  return "Token lexeme: '" + lexeme + "' Token type: " + type_str;
 }  // print

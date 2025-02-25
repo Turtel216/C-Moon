@@ -18,13 +18,13 @@ enum TokenType {
 };  // TokenType
 
 // Token recognized by the C-Moon compiler
-struct Token {
+struct token {
   std::string lexeme;
   TokenType type;
 
-  Token() = delete;  // Default Constructor
+  token() = delete;  // Default Constructor
 
-  Token(std::string lexeme, TokenType type) noexcept
+  token(std::string lexeme, TokenType type) noexcept
       : lexeme(lexeme), type(type) {}  // Constructor
 
   // Pretty printer for Token type
