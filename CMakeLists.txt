@@ -7,14 +7,14 @@ include(CTest)
 # Source files
 set(SRC_FILES
     src/main.cpp
-    src/errors/errors.cpp
+    src/utils/errors/errors.cpp
     src/lexer/lexer.cpp
     src/lexer/token.cpp
 )
 
 # Library for lexer
 add_library(lexer_lib
-    src/errors/errors.cpp
+    src/utils/errors/errors.cpp
     src/lexer/lexer.cpp
     src/lexer/token.cpp
 )
