@@ -35,15 +35,5 @@ int main(int argc, char *argv[]) {
     assert(expected_tokens[i] == actual_tokens[i]);
   }
 
-  // TODO: Splite these two tests(success and failure) into two source files
-
-  std::string test_string_failure = "int main(void) #";
-  lexer lex_failure(test_string_failure);
-
-  cmoon::result<std::vector<token>, cmoon::lexer_error> result_failure =
-      lex_failure.start();
-
-  assert(!result_failure.has_value());
-
   return EXIT_SUCCESS;
 }

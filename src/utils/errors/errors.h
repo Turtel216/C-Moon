@@ -22,6 +22,9 @@ class lexer_error : error {
  public:
   lexer_error() = delete;  // Default Constructor
   lexer_error(const std::string msg) noexcept : error(msg) {}  // Constructor
+
+  // overloaded equality operator
+  auto operator==(lexer_error& other) noexcept -> bool const;
 };  // lexer_error
 }  // namespace cmoon
 
