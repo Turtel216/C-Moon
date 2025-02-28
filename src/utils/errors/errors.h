@@ -1,6 +1,7 @@
 #ifndef ERRORS_H_
 #define ERRORS_H_
 
+#include <stdexcept>
 #include <string>
 
 namespace cmoon {
@@ -26,6 +27,12 @@ class lexer_error : error {
   // overloaded equality operator
   auto operator==(lexer_error& other) noexcept -> bool const;
 };  // lexer_error
+
+// Simple parser exception class
+class ParseError : public std::runtime_error {
+ public:
+  explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
+};  // ParseError
 }  // namespace cmoon
 
 #endif  // ERRORS_H_

@@ -10,6 +10,7 @@ set(SRC_FILES
     src/utils/errors/errors.cpp
     src/lexer/lexer.cpp
     src/lexer/token.cpp
+    src/parser/parser.cpp
 )
 
 # Library for lexer
