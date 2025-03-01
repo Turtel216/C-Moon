@@ -11,6 +11,7 @@ set(SRC_FILES
     src/lexer/lexer.cpp
     src/lexer/token.cpp
     src/parser/parser.cpp
+    src/parser/ast.cpp
 )
 
 # Library for lexer
