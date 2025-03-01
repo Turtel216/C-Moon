@@ -19,10 +19,11 @@ enum type {
 // A struct representing a node in the AST
 struct node {
   std::string value;           // string value of node
-  std::shared_ptr<node> next;  // next node in AST reprentation
+  std::unique_ptr<node> next;  // next node in AST reprentation
   type node_type;              // type of AST node
 
-  node(std::string value) noexcept : value(std::move(value)) {};  // Constructor
+  node(std::string value, type node_type) noexcept
+      : value(std::move(value)), node_type(node_type) {};  // Constructor
 
   // String reprentation of the Ast node
   auto print() noexcept -> std::string const;

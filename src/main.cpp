@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
       token(";", SEMICOLON),           token("}", CLOSED_BRACE)};
 
   Parser parser(tokens);
-  bool success = parser.parse();
+  auto result = parser.parse();
 
-  return success ? 0 : 1;
+  return result.has_value() ? 0 : 1;
 }

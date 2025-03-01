@@ -1,10 +1,13 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
+#include <memory>
+#include <optional>
 #include <vector>
 
 #include "../lexer/token.h"
 #include "../utils/errors/errors.h"
+#include "ast.h"
 
 // Recursive Descent Parser for C-Moon
 class Parser {
@@ -28,24 +31,24 @@ class Parser {
   // Parsing functions for each non-terminal in the grammar
 
   // <program> ::= <function>
-  auto parse_program() -> void;
+  auto parse_program() -> std::unique_ptr<ast::node>;
 
   // <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-  auto parse_function() -> void;
+  auto parse_function() -> std::unique_ptr<ast::node>;
 
   // <statement> ::= "return" <exp> ";"
-  auto parse_statement() -> void;
+  auto parse_statement() -> std::unique_ptr<ast::node>;
 
   // <exp> ::= <int>
-  auto parse_exp() -> void;
+  auto parse_exp() -> std::unique_ptr<ast::node>;
 
  public:
   // Constructor
   explicit Parser(const std::vector<token>& tokens)
       : tokens(tokens), current_position(0) {}
 
-  // Parse the input and return success/failure
-  auto parse() -> bool;
+  // Parse the input and return an optional for success/failure
+  auto parse() -> std::optional<std::unique_ptr<ast::node>>;
 };  // Parser
 
 // Example usage

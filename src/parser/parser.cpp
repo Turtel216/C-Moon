@@ -1,6 +1,15 @@
 #include "parser.h"
 
 #include <iostream>
+#include <memory>
+#include <optional>
+
+#include "ast.h"
+
+// TODO: Add proper values to ast::node constructors. The string value should be
+// the actual value.
+// Also make the unique pointers towards the end of the function to safe time
+// when a function will throw an exception anyways
 
 // Get the current token
 auto Parser::current_token() const -> const token& {
@@ -42,20 +51,20 @@ auto Parser::expect(TokenType expected_type, const std::string& error_message)
 // Parsing functions for each non-terminal in the grammar
 
 // <program> ::= <function>
-auto Parser::parse_program() -> void {
-  std::cout << "Parsing program..." << std::endl;
-  parse_function();
+auto Parser::parse_program() -> std::unique_ptr<ast::node> {
+  auto result = std::make_unique<ast::node>("Program", ast::type::PROGRAM);
+  result->next = parse_function();
 
   // Ensure we've consumed all tokens
   if (current_position < tokens.size()) {
     throw cmoon::ParseError("Unexpected tokens after end of program");
   }  // if
+
+  return result;
 }  // parse_program
 
 // <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-auto Parser::parse_function() -> void {
-  std::cout << "Parsing function..." << std::endl;
-
+auto Parser::parse_function() -> std::unique_ptr<ast::node> {
   // Match "int"
   expect(INT_KEYWORD, "Expected 'int' keyword at start of function");
 
@@ -74,41 +83,51 @@ auto Parser::parse_function() -> void {
   // Match "{"
   expect(OPEN_BRACE, "Expected '{' to begin function body");
 
+  // Create node
+  auto result = std::make_unique<ast::node>("Int", ast::type::CONSTANT);
   // Parse statement
-  parse_statement();
+  // Point to next node in AST tree
+  result->next = parse_statement();
 
   // Match "}"
   expect(CLOSED_BRACE, "Expected '}' to end function body");
+
+  return result;
 }  // parse_function
 
 // <statement> ::= "return" <exp> ";"
-auto Parser::parse_statement() -> void {
-  std::cout << "Parsing statement..." << std::endl;
-
+auto Parser::parse_statement() -> std::unique_ptr<ast::node> {
   // Match "return"
   expect(RETURN_KEYWORD, "Expected 'return' keyword");
 
+  // Create node
+  auto result = std::make_unique<ast::node>("Return", ast::type::RETURN);
   // Parse expression
-  parse_exp();
+  // Point to next node in AST tree
+  result->next = parse_exp();
 
   // Match ";"
   expect(SEMICOLON, "Expected ';' after return statement");
+
+  return result;
 }  // parse_statement
 
 // <exp> ::= <int>
-auto Parser::parse_exp() -> void {
-  std::cout << "Parsing expression..." << std::endl;
-
+auto Parser::parse_exp() -> std::unique_ptr<ast::node> {
   // Match constant
   expect(CONSTANT, "Expected integer constant in expression");
+
+  // Create node
+  auto result = std::make_unique<ast::node>("Return", ast::type::RETURN);
+  // TODO: Point to next node in AST tree. Which is null
+
+  return result;
 }  // parse_exp
 
 // Parse the input and return success/failure
-auto Parser::parse() -> bool {
+auto Parser::parse() -> std::optional<std::unique_ptr<ast::node>> {
   try {
-    parse_program();
-    std::cout << "Parsing completed successfully!" << std::endl;
-    return true;
+    return parse_program();
   }  // try
   catch (const cmoon::ParseError& e) {
     std::cerr << "Parse error: " << e.what() << std::endl;
@@ -118,6 +137,6 @@ auto Parser::parse() -> bool {
     else {
       std::cerr << "At end of input" << std::endl;
     }  // else
-    return false;
+    return std::nullopt;
   }  // catch
 }  // parse
