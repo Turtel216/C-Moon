@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <string>
 
 #include "ast.h"
 
@@ -14,7 +15,7 @@
 // Get the current token
 auto Parser::current_token() const -> const Token& {
   if (current_position >= tokens.size()) {
-    throw cmoon::ParseError("Unexpected end of input");
+    throw cmoon::ParseException("Unexpected end of input");
   }  // if
   return tokens[current_position];
 }  // current_token
@@ -44,7 +45,7 @@ auto Parser::match(TokenType expected_type) -> bool {
 auto Parser::expect(TokenType expected_type, const std::string& error_message)
     -> void {
   if (!match(expected_type)) {
-    throw cmoon::ParseError(error_message);
+    throw cmoon::ParseException(error_message);
   }  // if
 }  // expect
 
@@ -57,7 +58,7 @@ auto Parser::parse_program() -> std::unique_ptr<ast::Node> {
 
   // Ensure we've consumed all tokens
   if (current_position < tokens.size()) {
-    throw cmoon::ParseError("Unexpected tokens after end of program");
+    throw cmoon::ParseException("Unexpected tokens after end of program");
   }  // if
 
   return result;
@@ -125,18 +126,20 @@ auto Parser::parse_exp() -> std::unique_ptr<ast::Node> {
 }  // parse_exp
 
 // Parse the input and return success/failure
-auto Parser::parse() -> std::optional<std::unique_ptr<ast::Node>> {
+auto Parser::parse()
+    -> cmoon::result<std::unique_ptr<ast::Node>, cmoon::ParserError> {
   try {
     return parse_program();
   }  // try
-  catch (const cmoon::ParseError& e) {
-    std::cerr << "Parse error: " << e.what() << std::endl;
+  catch (const cmoon::ParseException& e) {
+    std::string exc_msg = e.what();
+    std::string error_msg = "Parse error: " + exc_msg + "\n";
     if (current_position < tokens.size()) {
-      std::cerr << "At token: " << tokens[current_position].lexeme << std::endl;
+      error_msg += "At token: " + tokens[current_position].lexeme;
     }  // if
     else {
-      std::cerr << "At end of input" << std::endl;
+      error_msg = "At end of input";
     }  // else
-    return std::nullopt;
+    return cmoon::ParserError(error_msg);
   }  // catch
 }  // parse

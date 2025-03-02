@@ -25,7 +25,7 @@ class Lexer {
   // Start the lexing process. Returns either a vector of the tokenized input
   // string or an lexer_rror
   [[nodiscard]] auto start() noexcept
-      -> cmoon::result<std::vector<Token>, cmoon::lexer_error>;
+      -> cmoon::result<std::vector<Token>, cmoon::LexerError>;
 
  private:
   // Current position(index) of the lexer.

@@ -17,7 +17,7 @@ static const std::map<std::string, Token> keywords{
 // Start the lexing process. Returns either a vector of the tokenized input
 // string or an lexer_rror
 [[nodiscard]] auto Lexer::start() noexcept
-    -> cmoon::result<std::vector<Token>, cmoon::lexer_error> {
+    -> cmoon::result<std::vector<Token>, cmoon::LexerError> {
   while (!is_at_end()) {
     std::optional<Token> token_opt = next_token();
     if (token_opt.has_value()) {
@@ -28,7 +28,7 @@ static const std::map<std::string, Token> keywords{
       std::string error_msg =
           "uncrecognized character";  // TODO: add the missing character to the
                                       // string
-      return cmoon::lexer_error(error_msg);
+      return cmoon::LexerError(error_msg);
     }  // else
   }  // while
 

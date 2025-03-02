@@ -7,6 +7,7 @@
 
 #include "../lexer/token.h"
 #include "../utils/errors/errors.h"
+#include "../utils/result.h"
 #include "ast.h"
 
 // Recursive Descent Parser for C-Moon
@@ -48,7 +49,7 @@ class Parser {
       : tokens(tokens), current_position(0) {}
 
   // Parse the input and return an optional for success/failure
-  auto parse() -> std::optional<std::unique_ptr<ast::Node>>;
+  auto parse() -> cmoon::result<std::unique_ptr<ast::Node>, cmoon::ParserError>;
 };  // Parser
 
 #endif  // PARSER_H_

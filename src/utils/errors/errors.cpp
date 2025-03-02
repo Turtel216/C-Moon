@@ -7,7 +7,11 @@ namespace cmoon {
   return msg;
 }  // error_msg
 
-auto lexer_error::operator==(lexer_error& other) noexcept -> bool const {
+auto LexerError::operator==(LexerError& other) noexcept -> bool const {
+  return error_msg() == other.error_msg();
+}  // == operator overload
+
+auto ParserError::operator==(ParserError& other) noexcept -> bool const {
   return error_msg() == other.error_msg();
 }  // == operator overload
 }  // namespace cmoon

@@ -16,23 +16,33 @@ class error {
 
   // Get the cmoon_error msg
   auto error_msg() noexcept -> std::string const;
-};  // cmoon_error
+};  // Error
 
 // Error type for the C-Moon lexer
-class lexer_error : error {
+class LexerError : error {
  public:
-  lexer_error() = delete;  // Default Constructor
-  lexer_error(const std::string msg) noexcept : error(msg) {}  // Constructor
+  LexerError() = delete;  // Default Constructor
+  LexerError(const std::string msg) noexcept : error(msg) {}  // Constructor
 
   // overloaded equality operator
-  auto operator==(lexer_error& other) noexcept -> bool const;
-};  // lexer_error
+  auto operator==(LexerError& other) noexcept -> bool const;
+};  // LexerError
+
+// Error type for the C-Moon Parser
+class ParserError : error {
+ public:
+  ParserError() = delete;  // Default Constructor
+  ParserError(const std::string msg) noexcept : error(msg) {}  // Constructor
+
+  // overloaded equality operator
+  auto operator==(ParserError& other) noexcept -> bool const;
+};  // ParserError
 
 // Simple parser exception class
-class ParseError : public std::runtime_error {
+class ParseException : public std::runtime_error {
  public:
-  explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
-};  // ParseError
+  explicit ParseException(const std::string& msg) : std::runtime_error(msg) {}
+};  // ParseException
 }  // namespace cmoon
 
 #endif  // ERRORS_H_

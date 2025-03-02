@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   };
 
   Lexer lex(test_string);
-  cmoon::result<std::vector<Token>, cmoon::lexer_error> result = lex.start();
+  cmoon::result<std::vector<Token>, cmoon::LexerError> result = lex.start();
 
   assert(result.has_value());
 
