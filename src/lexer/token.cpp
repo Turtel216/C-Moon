@@ -3,7 +3,7 @@
 #include <string>
 
 // Pretty printer for Token type
-auto token::print() noexcept -> std::string const {
+auto Token::print() noexcept -> std::string const {
   std::string type_str;
   switch (type) {
     case TokenType::VOID_KEYWORD:
@@ -45,6 +45,6 @@ auto token::print() noexcept -> std::string const {
 }  // print
 
 // Equality operator overload for testing
-auto token::operator==(const token& other) const -> bool {
+auto Token::operator==(const Token& other) const -> bool {
   return lexeme == other.lexeme && type == other.type;
 }

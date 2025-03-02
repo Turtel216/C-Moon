@@ -9,17 +9,17 @@
 #include "token.h"
 
 // key-value map of C-Moon keywords
-static const std::map<std::string, token> keywords{
-    {"int", token("int", TokenType::INT_KEYWORD)},
-    {"void", token("void", TokenType::VOID_KEYWORD)},
-    {"return", token("return", TokenType::RETURN_KEYWORD)}};
+static const std::map<std::string, Token> keywords{
+    {"int", Token("int", TokenType::INT_KEYWORD)},
+    {"void", Token("void", TokenType::VOID_KEYWORD)},
+    {"return", Token("return", TokenType::RETURN_KEYWORD)}};
 
 // Start the lexing process. Returns either a vector of the tokenized input
 // string or an lexer_rror
-[[nodiscard]] auto lexer::start() noexcept
-    -> cmoon::result<std::vector<token>, cmoon::lexer_error> {
+[[nodiscard]] auto Lexer::start() noexcept
+    -> cmoon::result<std::vector<Token>, cmoon::lexer_error> {
   while (!is_at_end()) {
-    std::optional<token> token_opt = next_token();
+    std::optional<Token> token_opt = next_token();
     if (token_opt.has_value()) {
       tokens.push_back(token_opt.value());
       advance();
@@ -36,26 +36,26 @@ static const std::map<std::string, token> keywords{
 }  // start
 
 // Returns the next recognized token.
-[[nodiscard]] auto lexer::next_token() noexcept -> std::optional<token> {
+[[nodiscard]] auto Lexer::next_token() noexcept -> std::optional<Token> {
   skip_whitespace();
 
   char curr_char = peek();
 
   switch (curr_char) {
     case ';':
-      return token(";", TokenType::SEMICOLON);
+      return Token(";", TokenType::SEMICOLON);
       break;
     case '(':
-      return token("(", TokenType::OPEN_PARENTHESIS);
+      return Token("(", TokenType::OPEN_PARENTHESIS);
       break;
     case ')':
-      return token(")", TokenType::CLOSED_PARENTHESIS);
+      return Token(")", TokenType::CLOSED_PARENTHESIS);
       break;
     case '{':
-      return token("{", TokenType::OPEN_BRACE);
+      return Token("{", TokenType::OPEN_BRACE);
       break;
     case '}':
-      return token("}", TokenType::CLOSED_BRACE);
+      return Token("}", TokenType::CLOSED_BRACE);
       break;
     default:
       if (std::isalnum(curr_char)) {
@@ -73,7 +73,7 @@ static const std::map<std::string, token> keywords{
 }  // next_token
 
 // Tokenize a number
-[[nodiscard]] auto lexer::lex_number() noexcept -> token {
+[[nodiscard]] auto Lexer::lex_number() noexcept -> Token {
   lexeme_start = pos;
   size_t sub_len = 1;
   while (std::isdigit(peek_next())) {
@@ -82,11 +82,11 @@ static const std::map<std::string, token> keywords{
   }  // while
 
   std::string lexeme = input.substr(lexeme_start, sub_len);
-  return token(lexeme, TokenType::CONSTANT);
+  return Token(lexeme, TokenType::CONSTANT);
 }  // lex_number
 
 // Tokenize an identifier
-[[nodiscard]] auto lexer::lex_identifier() noexcept -> token {
+[[nodiscard]] auto Lexer::lex_identifier() noexcept -> Token {
   lexeme_start = pos;
   size_t sub_len = 1;
   while (std::isalpha(peek_next())) {
@@ -98,19 +98,19 @@ static const std::map<std::string, token> keywords{
   std::string lexeme = input.substr(lexeme_start, sub_len);
 
   // Check if lexeme is a keyword
-  std::optional<token> keyword_opt = match_keyword(lexeme);
+  std::optional<Token> keyword_opt = match_keyword(lexeme);
   if (keyword_opt.has_value()) {
     return keyword_opt.value();
   }  // if
 
   // Not a keyword, return identifier
-  return token(lexeme, TokenType::IDENTIFIER);
+  return Token(lexeme, TokenType::IDENTIFIER);
 }  // lex_identifier
 
 // Check if the given string is a keyword. Return option of either the keyword
 // token or an empty optional
-[[nodiscard]] auto lexer::match_keyword(std::string& str) noexcept
-    -> std::optional<token> const {
+[[nodiscard]] auto Lexer::match_keyword(std::string& str) noexcept
+    -> std::optional<Token> const {
   if (auto result = keywords.find(str); result != keywords.end()) {
     return result->second;
   }  // if
@@ -120,7 +120,7 @@ static const std::map<std::string, token> keywords{
 
 // peek returns the current character specified by `pos`. Returns 0
 // if the end of input string is reached.
-auto lexer::peek() noexcept -> char const {
+auto Lexer::peek() noexcept -> char const {
   if (is_at_end()) {
     return '\0';
   }  // if
@@ -130,7 +130,7 @@ auto lexer::peek() noexcept -> char const {
 
 // peek_next returns the next character specified by `pos`. Returns 0
 // if the end of input string is reached.
-auto lexer::peek_next() noexcept -> char const {
+auto Lexer::peek_next() noexcept -> char const {
   if ((pos + 1) >= input.length()) {
     return '\0';
   }  // if
@@ -139,14 +139,14 @@ auto lexer::peek_next() noexcept -> char const {
 }  // peek_next
 
 // Check if the next character is the expected character
-auto lexer::check_next(char expected) noexcept -> bool const {
+auto Lexer::check_next(char expected) noexcept -> bool const {
   return expected == peek_next();
 }  // check_next
 
 // Skips whitespace and comments, advancing the current character index
 // appropriately. Handles single-line comments starting with '//'. Modifies
 // `pos`
-auto lexer::skip_whitespace() noexcept -> void {
+auto Lexer::skip_whitespace() noexcept -> void {
   while (!is_at_end()) {
     switch (peek()) {
       case ' ':
@@ -178,13 +178,13 @@ auto lexer::skip_whitespace() noexcept -> void {
 
 // Returns true if the lexer reached the end of the input string.
 // Returns false otherwise
-auto inline __attribute__((always_inline)) lexer::is_at_end() noexcept
+auto inline __attribute__((always_inline)) Lexer::is_at_end() noexcept
     -> bool const {
   return pos >= input.length();
 }  // is_at_end
 
 // Advance the lexer index by 1. The method does not check for
 // eof.
-auto inline __attribute__((always_inline)) lexer::advance() noexcept -> void {
+auto inline __attribute__((always_inline)) Lexer::advance() noexcept -> void {
   pos++;
 }  // advance

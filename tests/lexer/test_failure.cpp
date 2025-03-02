@@ -7,9 +7,9 @@
 
 int main(int argc, char *argv[]) {
   std::string test_string = "int main(void) #";
-  lexer lex(test_string);
+  Lexer lex(test_string);
 
-  cmoon::result<std::vector<token>, cmoon::lexer_error> result = lex.start();
+  cmoon::result<std::vector<Token>, cmoon::lexer_error> result = lex.start();
   cmoon::lexer_error expected_error =
       cmoon::lexer_error("uncrecognized character");
 

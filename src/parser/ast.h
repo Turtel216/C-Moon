@@ -9,7 +9,7 @@
 namespace ast {
 
 // Diffrent types of AST nodes
-enum type {
+enum Type {
   PROGRAM,
   FUNCTION,
   RETURN,
@@ -17,12 +17,12 @@ enum type {
 };  // type
 
 // A struct representing a node in the AST
-struct node {
+struct Node {
   std::string value;           // string value of node
-  std::unique_ptr<node> next;  // next node in AST reprentation
-  type node_type;              // type of AST node
+  std::unique_ptr<Node> next;  // next node in AST reprentation
+  Type node_type;              // type of AST node
 
-  node(std::string value, type node_type) noexcept
+  Node(std::string value, Type node_type) noexcept
       : value(std::move(value)), node_type(node_type) {};  // Constructor
 
   // String reprentation of the Ast node

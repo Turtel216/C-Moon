@@ -12,11 +12,11 @@
 // Recursive Descent Parser for C-Moon
 class Parser {
  private:
-  std::vector<token> tokens;  // Token stream from lexer
+  std::vector<Token> tokens;  // Token stream from lexer
   size_t current_position;    // Current position in token stream
 
   // Get the current token
-  const token& current_token() const;
+  const Token& current_token() const;
 
   // Advance to the next token
   auto advance() -> void;
@@ -31,28 +31,24 @@ class Parser {
   // Parsing functions for each non-terminal in the grammar
 
   // <program> ::= <function>
-  auto parse_program() -> std::unique_ptr<ast::node>;
+  auto parse_program() -> std::unique_ptr<ast::Node>;
 
   // <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-  auto parse_function() -> std::unique_ptr<ast::node>;
+  auto parse_function() -> std::unique_ptr<ast::Node>;
 
   // <statement> ::= "return" <exp> ";"
-  auto parse_statement() -> std::unique_ptr<ast::node>;
+  auto parse_statement() -> std::unique_ptr<ast::Node>;
 
   // <exp> ::= <int>
-  auto parse_exp() -> std::unique_ptr<ast::node>;
+  auto parse_exp() -> std::unique_ptr<ast::Node>;
 
  public:
   // Constructor
-  explicit Parser(const std::vector<token>& tokens)
+  explicit Parser(const std::vector<Token>& tokens)
       : tokens(tokens), current_position(0) {}
 
   // Parse the input and return an optional for success/failure
-  auto parse() -> std::optional<std::unique_ptr<ast::node>>;
+  auto parse() -> std::optional<std::unique_ptr<ast::Node>>;
 };  // Parser
-
-// Example usage
-/*int main() {
-}*/
 
 #endif  // PARSER_H_

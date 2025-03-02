@@ -9,25 +9,25 @@
 int main(int argc, char *argv[]) {
   std::string test_string =
       "//some function \nint  main(void)\n {\n return 0;  \n}";
-  std::vector<token> expected_tokens{
-      token("int", TokenType::INT_KEYWORD),
-      token("main", TokenType::IDENTIFIER),
-      token("(", TokenType::OPEN_PARENTHESIS),
-      token("void", TokenType::VOID_KEYWORD),
-      token(")", TokenType::CLOSED_PARENTHESIS),
-      token("{", TokenType::OPEN_BRACE),
-      token("return", TokenType::RETURN_KEYWORD),
-      token("0", TokenType::CONSTANT),
-      token(";", TokenType::SEMICOLON),
-      token("}", TokenType::CLOSED_BRACE),
+  std::vector<Token> expected_tokens{
+      Token("int", TokenType::INT_KEYWORD),
+      Token("main", TokenType::IDENTIFIER),
+      Token("(", TokenType::OPEN_PARENTHESIS),
+      Token("void", TokenType::VOID_KEYWORD),
+      Token(")", TokenType::CLOSED_PARENTHESIS),
+      Token("{", TokenType::OPEN_BRACE),
+      Token("return", TokenType::RETURN_KEYWORD),
+      Token("0", TokenType::CONSTANT),
+      Token(";", TokenType::SEMICOLON),
+      Token("}", TokenType::CLOSED_BRACE),
   };
 
-  lexer lex(test_string);
-  cmoon::result<std::vector<token>, cmoon::lexer_error> result = lex.start();
+  Lexer lex(test_string);
+  cmoon::result<std::vector<Token>, cmoon::lexer_error> result = lex.start();
 
   assert(result.has_value());
 
-  std::vector<token> actual_tokens = result.value();
+  std::vector<Token> actual_tokens = result.value();
 
   assert(expected_tokens.size() == actual_tokens.size());
 

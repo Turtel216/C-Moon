@@ -12,7 +12,7 @@
 // when a function will throw an exception anyways
 
 // Get the current token
-auto Parser::current_token() const -> const token& {
+auto Parser::current_token() const -> const Token& {
   if (current_position >= tokens.size()) {
     throw cmoon::ParseError("Unexpected end of input");
   }  // if
@@ -51,8 +51,8 @@ auto Parser::expect(TokenType expected_type, const std::string& error_message)
 // Parsing functions for each non-terminal in the grammar
 
 // <program> ::= <function>
-auto Parser::parse_program() -> std::unique_ptr<ast::node> {
-  auto result = std::make_unique<ast::node>("Program", ast::type::PROGRAM);
+auto Parser::parse_program() -> std::unique_ptr<ast::Node> {
+  auto result = std::make_unique<ast::Node>("Program", ast::Type::PROGRAM);
   result->next = parse_function();
 
   // Ensure we've consumed all tokens
@@ -64,7 +64,7 @@ auto Parser::parse_program() -> std::unique_ptr<ast::node> {
 }  // parse_program
 
 // <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-auto Parser::parse_function() -> std::unique_ptr<ast::node> {
+auto Parser::parse_function() -> std::unique_ptr<ast::Node> {
   // Match "int"
   expect(INT_KEYWORD, "Expected 'int' keyword at start of function");
 
@@ -84,7 +84,7 @@ auto Parser::parse_function() -> std::unique_ptr<ast::node> {
   expect(OPEN_BRACE, "Expected '{' to begin function body");
 
   // Create node
-  auto result = std::make_unique<ast::node>("Int", ast::type::CONSTANT);
+  auto result = std::make_unique<ast::Node>("Int", ast::Type::CONSTANT);
   // Parse statement
   // Point to next node in AST tree
   result->next = parse_statement();
@@ -96,12 +96,12 @@ auto Parser::parse_function() -> std::unique_ptr<ast::node> {
 }  // parse_function
 
 // <statement> ::= "return" <exp> ";"
-auto Parser::parse_statement() -> std::unique_ptr<ast::node> {
+auto Parser::parse_statement() -> std::unique_ptr<ast::Node> {
   // Match "return"
   expect(RETURN_KEYWORD, "Expected 'return' keyword");
 
   // Create node
-  auto result = std::make_unique<ast::node>("Return", ast::type::RETURN);
+  auto result = std::make_unique<ast::Node>("Return", ast::Type::RETURN);
   // Parse expression
   // Point to next node in AST tree
   result->next = parse_exp();
@@ -113,19 +113,19 @@ auto Parser::parse_statement() -> std::unique_ptr<ast::node> {
 }  // parse_statement
 
 // <exp> ::= <int>
-auto Parser::parse_exp() -> std::unique_ptr<ast::node> {
+auto Parser::parse_exp() -> std::unique_ptr<ast::Node> {
   // Match constant
   expect(CONSTANT, "Expected integer constant in expression");
 
   // Create node
-  auto result = std::make_unique<ast::node>("Return", ast::type::RETURN);
+  auto result = std::make_unique<ast::Node>("Return", ast::Type::RETURN);
   // TODO: Point to next node in AST tree. Which is null
 
   return result;
 }  // parse_exp
 
 // Parse the input and return success/failure
-auto Parser::parse() -> std::optional<std::unique_ptr<ast::node>> {
+auto Parser::parse() -> std::optional<std::unique_ptr<ast::Node>> {
   try {
     return parse_program();
   }  // try
