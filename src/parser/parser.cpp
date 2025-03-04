@@ -1,6 +1,5 @@
 #include "parser.h"
 
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -28,26 +27,40 @@ auto Parser::advance() -> void {
 }  // advance
 
 // Check if the current token matches the expected type
-auto Parser::match(TokenType expected_type) -> bool {
+auto Parser::match(TokenType expected_type) -> std::optional<Token> {
   if (current_position >= tokens.size()) {
-    return false;
+    return std::nullopt;
   }  // if
 
   if (tokens[current_position].type == expected_type) {
     advance();
-    return true;
+    return tokens[current_position -
+                  1];  // TODO: dont like that -1. Try and avoid it.
   }  // if
 
-  return false;
+  return std::nullopt;
 }  // match
 
 // Expect a token of a specific type (throw error if not found)
 auto Parser::expect(TokenType expected_type, const std::string& error_message)
     -> void {
-  if (!match(expected_type)) {
+  if (!match(expected_type).has_value()) {
     throw cmoon::ParseException(error_message);
   }  // if
 }  // expect
+
+// Expect a token of a specific type (throw error if not found) and return the
+// token.
+[[nodiscard]] auto Parser::expect_and_rtn(TokenType expected_type,
+                                          const std::string& error_message)
+    -> Token {
+  auto token = match(expected_type);
+  if (!token.has_value()) {
+    throw cmoon::ParseException(error_message);
+  }  // if
+
+  return token.value();
+}  // expect_and_rtn
 
 // Parsing functions for each non-terminal in the grammar
 
@@ -126,7 +139,7 @@ auto Parser::parse_exp() -> std::unique_ptr<ast::Node> {
 }  // parse_exp
 
 // Parse the input and return success/failure
-auto Parser::parse()
+[[nodiscard]] auto Parser::parse()
     -> cmoon::result<std::unique_ptr<ast::Node>, cmoon::ParserError> {
   try {
     return parse_program();

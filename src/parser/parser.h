@@ -22,12 +22,19 @@ class Parser {
   // Advance to the next token
   auto advance() -> void;
 
-  // Check if the current token matches the expected type
-  auto match(TokenType expected_type) -> bool;
+  // Check if the current token matches the expected type. Return token if it
+  // matches, std::nullopt if it does not match or end of token stream if
+  // reached.
+  auto match(TokenType expected_type) -> std::optional<Token>;
 
   // Expect a token of a specific type (throw error if not found)
   auto expect(TokenType expected_type, const std::string& error_message)
       -> void;
+
+  // Expect a token of a specific type (throw error if not found) and return the
+  // token.
+  [[nodiscard]] auto expect_and_rtn(TokenType expected_type,
+                                    const std::string& error_message) -> Token;
 
   // Parsing functions for each non-terminal in the grammar
 
@@ -49,7 +56,8 @@ class Parser {
       : tokens(tokens), current_position(0) {}
 
   // Parse the input and return an optional for success/failure
-  auto parse() -> cmoon::result<std::unique_ptr<ast::Node>, cmoon::ParserError>;
+  [[nodiscard]] auto parse()
+      -> cmoon::result<std::unique_ptr<ast::Node>, cmoon::ParserError>;
 };  // Parser
 
 #endif  // PARSER_H_
