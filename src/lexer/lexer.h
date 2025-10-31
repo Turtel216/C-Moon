@@ -18,8 +18,8 @@ class Lexer {
   Token next_token();
   Token make_number();
   std::optional<Token> skip_white_space();
-  std::string make_int();                // TODO
-  std::string make_optional_exponent();  // TODO
+  std::string make_int();
+  std::string make_optional_exponent();
   Token make_eof_token(Position pos) const noexcept;
   Token make_error_token(const std::string msg, Position pos) const noexcept;
 

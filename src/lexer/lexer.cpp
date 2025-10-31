@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <optional>
+#include <string>
 
 #include "token.h"
 
@@ -190,11 +191,54 @@ Token Lexer::make_number() {
   return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
 }
 
-Token Lexer::make_eof_token(Position pos) const noexcept {
+std::string inline Lexer::make_int() {
+  std::string sb = "";
+
+  if (c_char == '_') {  // TODO proper lexer error
+    throw "Cannot start number with underscore";
+  }
+
+  while (std::isdigit(c_char) || c_char) {
+    sb += c_char;
+    advance();
+  }
+
+  return sb;
+}
+
+std::string inline Lexer::make_optional_exponent() {
+  std::string value = "";
+
+  if (c_char == 'E' || c_char == 'e') {
+    value += c_char;
+    advance();
+
+    if (c_char == '+' || c_char == '-') {
+      value += c_char;
+      advance();
+    }
+
+    std::string exp = make_int();
+    if (exp.length() == 0) {  // TODO throw proper lexer error
+      throw "Invalid floating point constant" + value;
+    }
+
+    value += exp;
+  }
+
+  if (c_char == '.' || std::isalpha(c_char)) {
+    throw "Invalid character after floating point constant: " +
+        std::to_string(c_char);
+  }
+
+  return value;
+}
+
+Token inline Lexer::make_eof_token(Position pos) const noexcept {
   return Token("", TokenType::EOF_TOKEN, pos);
 }
 
-Token Lexer::make_error_token(const std::string msg,
-                              Position pos) const noexcept {
+Token inline Lexer::make_error_token(const std::string msg,
+                                     Position pos) const noexcept {
   return Token(msg, TokenType::ERROR, pos);
 }
