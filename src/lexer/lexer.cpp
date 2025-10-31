@@ -10,7 +10,7 @@ char Lexer::advance() {
   if (pos < text.length())
     c_char = text.at(pos);
   else
-    c_char = 0;  // No More character
+    c_char = 0;  // No More characters
 
   pos++;
   colunm++;
@@ -31,7 +31,14 @@ Token Lexer::next_token() {
 
   if (maybeToken.has_value()) return maybeToken.value();
 
-  // Digit
+  if (std::isdigit(c_char) || c_char == '.') {
+    return make_number();
+  }
+
+  if (std::isalpha(c_char) || c_char == '_') {
+    return make_text();
+  }
+
   // Letter
   // Symbol
 
@@ -115,7 +122,7 @@ Token Lexer::make_number() {
 
   value += make_int();
   if (value == ".") {
-    return make_error_token("Illegal floating point constant", {line, colunm});
+    throw LexerError("Illegal floating point constant", {line, colunm});
   }
 
   bool long_const = false;
@@ -148,7 +155,7 @@ Token Lexer::make_number() {
   if ((c_char == '.' || c_char == 'E' || c_char == 'e') &&
       (prev_char == 'L' || prev_char == 'l' || prev_char == 'U' ||
        prev_char == 'u')) {
-    return make_error_token(
+    throw LexerError(
         "Illegal floating point constant" + value + prev_char + '.',
         {line, colunm});
   }
@@ -166,10 +173,8 @@ Token Lexer::make_number() {
   if (parsing_double) {
     value += make_optional_exponent();
   } else if (std::isalpha(c_char)) {
-    return make_error_token("Illgegal floating point constant", {line, colunm});
+    throw LexerError("Illgegal floating point constant", {line, colunm});
   }
-
-  // TODO: Update with passing type to Token constructor
 
   if (parsing_double) {
     return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm},
@@ -198,8 +203,8 @@ Token Lexer::make_number() {
 std::string inline Lexer::make_int() {
   std::string sb = "";
 
-  if (c_char == '_') {  // TODO proper lexer error
-    throw "Cannot start number with underscore";
+  if (c_char == '_') {
+    throw LexerError("Cannot start number with underscore", {line, colunm});
   }
 
   while (std::isdigit(c_char) || c_char) {
@@ -223,8 +228,9 @@ std::string inline Lexer::make_optional_exponent() {
     }
 
     std::string exp = make_int();
-    if (exp.length() == 0) {  // TODO throw proper lexer error
-      throw "Invalid floating point constant" + value;
+    if (exp.length() == 0) {
+      throw LexerError("Invalid floating point constant" + value,
+                       {line, colunm});
     }
 
     value += exp;
@@ -242,7 +248,8 @@ Token inline Lexer::make_eof_token(Position pos) const noexcept {
   return Token("", TokenType::EOF_TOKEN, pos);
 }
 
-Token inline Lexer::make_error_token(const std::string msg,
-                                     Position pos) const noexcept {
-  return Token(msg, TokenType::ERROR, pos);
-}
+//
+// LexerError implementation
+//
+
+const char* LexerError::what() const noexcept { return formatted_msg.c_str(); }
