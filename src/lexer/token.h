@@ -15,6 +15,7 @@ enum TokenType {
   CONSTANT,            // Represents numeric constants (e.g., 123).
   SEMICOLON,           // Represents ';'.
   RETURN_KEYWORD,      // Represents the 'return' keyword.
+  NUMERIC_LITERAL,
   EOF_TOKEN,
   ERROR,
 };  // TokenType
@@ -27,6 +28,7 @@ class Position {
   bool operator==(Position const& rhs) const noexcept;
 };
 
+// TODO: Update Token to contain variable type
 // Token recognized by the C-Moon compiler
 class Token {
  public:

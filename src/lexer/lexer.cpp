@@ -1,5 +1,6 @@
 #include "lexer.h"
 
+#include <cctype>
 #include <optional>
 
 #include "token.h"
@@ -101,6 +102,99 @@ std::optional<Token> Lexer::skip_white_space() {
   }
 }
 
+Token Lexer::make_number() {
+  std::string value = "";
+  bool parsing_double = c_char == '.';
+
+  // loeading dot float
+  if (c_char == '.') {
+    value += c_char;
+    advance();
+  }
+
+  value += make_int();
+  if (value == ".") {
+    return make_error_token("Illegal floating point constant", {line, colunm});
+  }
+
+  bool long_const = false;
+  bool unsigned_const = false;
+  char prev_char = c_char;
+  if (value.length() > 0 && !parsing_double) {
+    if (c_char == 'L' || c_char == 'l') {
+      // long constant
+      advance();
+      long_const = true;
+
+      if (c_char == 'U' || c_char == 'u') {
+        // unsigned constant
+        advance();
+        unsigned_const = true;
+      }
+    } else if (c_char == 'U' || c_char == 'u') {
+      // unsigned constant
+      advance();
+      unsigned_const = true;
+
+      if (c_char == 'L' || c_char == 'l') {
+        // long constant
+        advance();
+        long_const = true;
+      }
+    }
+  }
+
+  if ((c_char == '.' || c_char == 'E' || c_char == 'e') &&
+      (prev_char == 'L' || prev_char == 'l' || prev_char == 'U' ||
+       prev_char == 'u')) {
+    return make_error_token(
+        "Illegal floating point constant" + value + prev_char + '.',
+        {line, colunm});
+  }
+
+  if (c_char == '.') {
+    value += c_char;
+    advance();
+    parsing_double = true;
+
+    value += make_int();
+  }
+
+  parsing_double |= (c_char == 'E' || c_char == 'e');
+
+  if (parsing_double) {
+    value += make_optional_exponent();
+  } else if (std::isalpha(c_char)) {
+    return make_error_token("Illgegal floating point constant", {line, colunm});
+  }
+
+  // TODO: Update with passing type to Token constructor
+
+  if (parsing_double) {
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+  }
+
+  if (parsing_double && long_const) {
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+  }
+
+  if (long_const) {
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+  }
+
+  if (unsigned_const) {
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+  }
+
+  // Int
+  return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+}
+
 Token Lexer::make_eof_token(Position pos) const noexcept {
   return Token("", TokenType::EOF_TOKEN, pos);
+}
+
+Token Lexer::make_error_token(const std::string msg,
+                              Position pos) const noexcept {
+  return Token(msg, TokenType::ERROR, pos);
 }
