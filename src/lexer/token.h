@@ -37,7 +37,6 @@ class Position {
   bool operator==(Position const& rhs) const noexcept;
 };
 
-// TODO: Update Token to contain variable type
 // Token recognized by the C-Moon compiler
 class Token {
  public:

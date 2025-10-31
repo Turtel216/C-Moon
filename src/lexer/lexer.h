@@ -27,7 +27,7 @@ class Lexer {
   Token make_eof_token(Position pos) const noexcept;
 
  public:
-  Lexer(std::string&& input_str);
+  Lexer(std::string input_str) : text(std::move(input_str)) {}
 
   Lexer() = delete;
 };
