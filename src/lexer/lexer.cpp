@@ -172,23 +172,27 @@ Token Lexer::make_number() {
   // TODO: Update with passing type to Token constructor
 
   if (parsing_double) {
-    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm},
+                 VarType::DOUBLE);
   }
 
   if (parsing_double && long_const) {
-    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm},
+                 VarType::UNSIGNED_LONG);
   }
 
   if (long_const) {
-    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm},
+                 VarType::LONG);
   }
 
   if (unsigned_const) {
-    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+    return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm},
+                 VarType::UNSIGNED_INT);
   }
 
   // Int
-  return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm});
+  return Token(value, TokenType::NUMERIC_LITERAL, {line, colunm}, VarType::INT);
 }
 
 std::string inline Lexer::make_int() {

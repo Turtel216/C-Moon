@@ -1,6 +1,7 @@
 #ifndef TOKEN_H_
 #define TOKEN_H_
 
+#include <optional>
 #include <string>
 
 // Type of a C-Moon Token
@@ -20,6 +21,14 @@ enum TokenType {
   ERROR,
 };  // TokenType
 
+enum VarType {
+  INT,
+  DOUBLE,
+  UNSIGNED_LONG,
+  LONG,
+  UNSIGNED_INT,
+};
+
 class Position {
  public:
   int line, column;
@@ -35,7 +44,14 @@ class Token {
   Token() = delete;  // Default Constructor
 
   Token(std::string _lexeme, TokenType _type, Position _pos) noexcept
-      : lexeme(_lexeme), type(_type), pos(_pos) {}  // Constructor
+      : lexeme(_lexeme), type(_type), pos(_pos), var_type({}) {}  // Constructor
+
+  Token(std::string _lexeme, TokenType _type, Position _pos,
+        VarType _var_type) noexcept
+      : lexeme(_lexeme),
+        type(_type),
+        pos(_pos),
+        var_type(std::make_optional(_var_type)) {}
 
   // Pretty printer for Token type
   auto print() noexcept -> std::string const;
@@ -47,6 +63,7 @@ class Token {
   std::string lexeme;
   TokenType type;
   Position pos;
+  std::optional<VarType> var_type;
 
 };  // Token
 
