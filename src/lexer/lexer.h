@@ -18,7 +18,7 @@ class Lexer {
   Token next_token();
   std::optional<Token> skip_white_space();
 
-  Token make_eof_token() const noexcept;
+  Token make_eof_token(Position pos) const noexcept;
 
  public:
   Lexer(std::string&& input_str);

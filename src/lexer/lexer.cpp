@@ -33,7 +33,7 @@ Token Lexer::next_token() {
   // Letter
   // Symbol
 
-  return make_eof_token();
+  return make_eof_token({line, colunm});
 }
 
 std::optional<Token> Lexer::skip_white_space() {
@@ -63,7 +63,7 @@ std::optional<Token> Lexer::skip_white_space() {
         advance();
       }
       if (c_char == 0) {  // EOF
-        return make_eof_token();
+        return make_eof_token({line, colunm});
       }
 
       line++;
@@ -85,7 +85,8 @@ std::optional<Token> Lexer::skip_white_space() {
           advance();
         }
 
-        if (c_char == 0) return Token("Unclosed Comment", TokenType::ERROR);
+        if (c_char == 0)
+          return Token("Unclosed Comment", TokenType::ERROR, {line, colunm});
 
         advance();  // skip the star
 
@@ -100,6 +101,6 @@ std::optional<Token> Lexer::skip_white_space() {
   }
 }
 
-Token Lexer::make_eof_token() const noexcept {
-  return Token("", TokenType::EOF_TOKEN);
+Token Lexer::make_eof_token(Position pos) const noexcept {
+  return Token("", TokenType::EOF_TOKEN, pos);
 }

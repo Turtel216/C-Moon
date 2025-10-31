@@ -2,6 +2,10 @@
 
 #include <string>
 
+bool Position::operator==(Position const& rhs) const noexcept {
+  return (line == rhs.line && column == rhs.column);
+}
+
 // Pretty printer for Token type
 auto Token::print() noexcept -> std::string const {
   std::string type_str;
@@ -46,5 +50,5 @@ auto Token::print() noexcept -> std::string const {
 
 // Equality operator overload for testing
 auto Token::operator==(const Token& other) const -> bool {
-  return lexeme == other.lexeme && type == other.type;
+  return (lexeme == other.lexeme && type == other.type && pos == other.pos);
 }

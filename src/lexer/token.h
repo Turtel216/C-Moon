@@ -19,21 +19,32 @@ enum TokenType {
   ERROR,
 };  // TokenType
 
-// Token recognized by the C-Moon compiler
-struct Token {
-  std::string lexeme;
-  TokenType type;
+class Position {
+ public:
+  int line, column;
+  Position(int _line, int _column) noexcept : line(_line), column(_column) {}
 
+  bool operator==(Position const& rhs) const noexcept;
+};
+
+// Token recognized by the C-Moon compiler
+class Token {
+ public:
   Token() = delete;  // Default Constructor
 
-  Token(std::string lexeme, TokenType type) noexcept
-      : lexeme(lexeme), type(type) {}  // Constructor
+  Token(std::string _lexeme, TokenType _type, Position _pos) noexcept
+      : lexeme(_lexeme), type(_type), pos(_pos) {}  // Constructor
 
   // Pretty printer for Token type
   auto print() noexcept -> std::string const;
 
   // Equality operator overload for testing
-  auto operator==(const Token& other) const -> bool;
+  auto operator==(Token const& other) const -> bool;
+
+ private:
+  std::string lexeme;
+  TokenType type;
+  Position pos;
 
 };  // Token
 
