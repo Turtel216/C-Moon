@@ -5,7 +5,7 @@
 #include <string>
 
 // Type of a C-Moon Token
-enum TokenType {
+enum class TokenType {
   INT_KEYWORD,         // Represents the 'int' keyword.
   VOID_KEYWORD,        // Represents the 'void' keyword.
   IDENTIFIER,          // Any valid identifier (e.g., function/variable names).
@@ -17,9 +17,15 @@ enum TokenType {
   SEMICOLON,           // Represents ';'.
   RETURN_KEYWORD,      // Represents the 'return' keyword.
   NUMERIC_LITERAL,
+  IF_KEYWORD,
+  ELSE_KEYWORD,
+  WHILE_KEYWORD,
   EOF_TOKEN,
   ERROR,
+
 };  // TokenType
+
+std::optional<TokenType> keyword_from_string(const std::string& value);
 
 enum VarType {
   INT,
@@ -53,10 +59,10 @@ class Token {
         var_type(std::make_optional(_var_type)) {}
 
   // Pretty printer for Token type
-  auto print() noexcept -> std::string const;
+  std::string const print() noexcept;
 
   // Equality operator overload for testing
-  auto operator==(Token const& other) const -> bool;
+  bool operator==(Token const& other) const;
 
  private:
   std::string lexeme;

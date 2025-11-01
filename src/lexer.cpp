@@ -1,6 +1,7 @@
 #include "../include/lexer.hpp"
 
 #include <cctype>
+#include <cstddef>
 #include <optional>
 #include <string>
 
@@ -31,16 +32,11 @@ Token Lexer::next_token() {
 
   if (maybeToken.has_value()) return maybeToken.value();
 
-  if (std::isdigit(c_char) || c_char == '.') {
-    return make_number();
-  }
+  if (std::isdigit(c_char) || c_char == '.') return make_number();
 
-  if (std::isalpha(c_char) || c_char == '_') {
-    return make_text();
-  }
+  if (std::isalpha(c_char) || c_char == '_') return make_text();
 
-  // Letter
-  // Symbol
+  if (c_char != 0) return make_symbol();
 
   return make_eof_token({line, colunm});
 }
@@ -242,6 +238,42 @@ std::string inline Lexer::make_optional_exponent() {
   }
 
   return value;
+}
+
+Token Lexer::make_text() {
+  std::string sb("");
+
+  if (std::isalpha(c_char) || c_char == '_') {
+    sb += c_char;
+    advance();
+  }
+
+  while (std::isalnum(c_char) || c_char == '_') {
+    sb += c_char;
+    advance();
+  }
+
+  std::string value = sb;
+  try {  // Check if the value is a keyword
+    // Check if value is all lowercase
+    std::string lower = value;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    if (lower == value) {
+      std::string upper = value;
+      std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+
+      std::optional<TokenType> maybeTt = keyword_from_string(upper);
+      if (maybeTt.has_value()) {
+        return Token(value, maybeTt.value(), Position(line, colunm));
+      }
+    }
+  } catch (...) {
+    // ignore exceptions
+  }
+
+  // Not a keyword,  must be an identifier
+  return Token(value, TokenType::IDENTIFIER, Position(line, colunm));
 }
 
 Token inline Lexer::make_eof_token(Position pos) const noexcept {

@@ -1,13 +1,15 @@
 #include "../include/token.hpp"
 
+#include <optional>
 #include <string>
+#include <unordered_map>
 
 bool Position::operator==(Position const& rhs) const noexcept {
   return (line == rhs.line && column == rhs.column);
 }
 
 // Pretty printer for Token type
-auto Token::print() noexcept -> std::string const {
+std::string const Token::print() noexcept {
   std::string type_str;
   switch (type) {
     case TokenType::VOID_KEYWORD:
@@ -49,6 +51,24 @@ auto Token::print() noexcept -> std::string const {
 }  // print
 
 // Equality operator overload for testing
-auto Token::operator==(const Token& other) const -> bool {
+bool Token::operator==(const Token& other) const {
   return (lexeme == other.lexeme && type == other.type && pos == other.pos);
+}
+
+std::optional<TokenType> keyword_from_string(const std::string& value) {
+  static const std::unordered_map<std::string, TokenType> tokenMap = {
+      // TODO: Complete all keywords
+      {"IF", TokenType::IF_KEYWORD},
+      {"ELSE", TokenType::ELSE_KEYWORD},
+      {"WHILE", TokenType::WHILE_KEYWORD},
+      {"RETURN", TokenType::RETURN_KEYWORD},
+  };
+
+  auto it = tokenMap.find(value);
+  if (it != tokenMap.end()) {
+    return it->second;
+  }
+
+  // Not found — return as identifier by default
+  return {};
 }

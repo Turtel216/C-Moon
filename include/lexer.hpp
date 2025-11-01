@@ -20,7 +20,8 @@ class Lexer {
   char peek() const;
   Token next_token();
   Token make_number();
-  Token make_text();  // TODO
+  Token make_text();
+  Token make_symbol();
   std::optional<Token> skip_white_space();
   std::string make_int();
   std::string make_optional_exponent();
