@@ -1,10 +1,10 @@
-#include "parser.h"
+#include "../include/parser.hpp"
 
 #include <memory>
 #include <optional>
 #include <string>
 
-#include "ast.h"
+#include "../include/ast.hpp"
 
 // TODO: Add proper values to ast::node constructors. The string value should be
 // the actual value.

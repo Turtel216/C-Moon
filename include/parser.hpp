@@ -5,10 +5,8 @@
 #include <optional>
 #include <vector>
 
-#include "../lexer/token.h"
-#include "../utils/errors/errors.h"
-#include "../utils/result.h"
-#include "ast.h"
+#include "ast.hpp"
+#include "token.hpp"
 
 // Recursive Descent Parser for C-Moon
 class Parser {

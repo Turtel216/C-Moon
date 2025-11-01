@@ -7,7 +7,7 @@
 #include <optional>
 #include <string>
 
-#include "token.h"
+#include "token.hpp"
 
 class Lexer {
  private:

@@ -1,10 +1,10 @@
-#include "lexer.h"
+#include "../include/lexer.hpp"
 
 #include <cctype>
 #include <optional>
 #include <string>
 
-#include "token.h"
+#include "../include/token.hpp"
 
 char Lexer::advance() {
   if (pos < text.length())

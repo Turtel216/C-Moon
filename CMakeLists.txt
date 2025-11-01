@@ -7,27 +7,24 @@ include(CTest)
 # Source files
 set(SRC_FILES
     src/main.cpp
-    src/utils/errors/errors.cpp
-    src/lexer/lexer.cpp
-    src/lexer/token.cpp
-    src/parser/parser.cpp
-    src/parser/ast.cpp
+    src/lexer.cpp
+    src/token.cpp
+    src/parser.cpp
+    src/ast.cpp
 )
 
 # Library for lexer
 add_library(lexer_lib
-    src/utils/errors/errors.cpp
-    src/lexer/lexer.cpp
-    src/lexer/token.cpp
+    src/lexer.cpp
+    src/token.cpp
 )
 
 # Library for parser
 add_library(parser_lib
-    src/utils/errors/errors.cpp
-    src/lexer/lexer.cpp
-    src/lexer/token.cpp
-    src/parser/ast.cpp
-    src/parser/parser.cpp)
+    src/lexer.cpp
+    src/token.cpp
+    src/ast.cpp
+    src/parser.cpp)
 
 # Main executable
 add_executable(cm ${SRC_FILES})

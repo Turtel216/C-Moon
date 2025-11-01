@@ -1,10 +1,10 @@
 #include <cstdlib>
 #include <vector>
 
-#include "lexer/token.h"
-#include "parser/parser.h"
+#include "../include/parser.hpp"
+#include "../include/token.hpp"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Example Token stream for "int main(void) { return 42; }"
   std::vector<Token> tokens = {
       Token("int", INT_KEYWORD),       Token("main", IDENTIFIER),
