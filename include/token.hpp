@@ -26,6 +26,7 @@ enum class TokenType {
 };  // TokenType
 
 std::optional<TokenType> keyword_from_string(const std::string& value);
+std::optional<TokenType> symbol_from_string(const std::string& value);  // TODO
 
 enum VarType {
   INT,

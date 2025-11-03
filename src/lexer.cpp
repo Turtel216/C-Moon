@@ -1,7 +1,6 @@
 #include "../include/lexer.hpp"
 
 #include <cctype>
-#include <cstddef>
 #include <optional>
 #include <string>
 
@@ -41,7 +40,7 @@ Token Lexer::next_token() {
   return make_eof_token({line, colunm});
 }
 
-std::optional<Token> Lexer::skip_white_space() {
+std::optional<Token> inline Lexer::skip_white_space() {
   while (true) {
     while (c_char == ' ' || c_char == '\n' || c_char == '\t' ||
            c_char == '\r') {
@@ -106,7 +105,7 @@ std::optional<Token> Lexer::skip_white_space() {
   }
 }
 
-Token Lexer::make_number() {
+Token inline Lexer::make_number() {
   std::string value = "";
   bool parsing_double = c_char == '.';
 
@@ -274,6 +273,26 @@ Token Lexer::make_text() {
 
   // Not a keyword,  must be an identifier
   return Token(value, TokenType::IDENTIFIER, Position(line, colunm));
+}
+
+Token inline Lexer::make_symbol() {
+  std::string symb = std::to_string(c_char);
+  advance();
+  if (c_char != 0) {
+    std::string two_char_symb = symb + c_char;
+    std::optional<TokenType> maybe_token = symbol_from_string(two_char_symb);
+    if (maybe_token.has_value()) {
+      advance();
+      return Token(two_char_symb, maybe_token.value(), {line, colunm});
+    }
+  }
+
+  std::optional<TokenType> maybe_token = symbol_from_string(symb);
+  if (maybe_token.has_value()) {
+    return Token(symb, maybe_token.value(), {line, colunm});
+  }
+
+  throw LexerError("Illegal character" + symb, {line, colunm});
 }
 
 Token inline Lexer::make_eof_token(Position pos) const noexcept {

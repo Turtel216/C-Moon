@@ -62,6 +62,24 @@ std::optional<TokenType> keyword_from_string(const std::string& value) {
       {"ELSE", TokenType::ELSE_KEYWORD},
       {"WHILE", TokenType::WHILE_KEYWORD},
       {"RETURN", TokenType::RETURN_KEYWORD},
+      {"VOID", TokenType::VOID_KEYWORD},
+  };
+
+  auto it = tokenMap.find(value);
+  if (it != tokenMap.end()) {
+    return it->second;
+  }
+
+  // Not found — return as identifier by default
+  return {};
+}
+
+std::optional<TokenType> symbol_from_string(const std::string& value) {
+  static const std::unordered_map<std::string, TokenType> tokenMap = {
+      // TODO: Complete all symbols
+      {";", TokenType::SEMICOLON},          {"(", TokenType::OPEN_PARENTHESIS},
+      {")", TokenType::CLOSED_PARENTHESIS}, {"}", TokenType::OPEN_BRACE},
+      {"{", TokenType::OPEN_BRACE},
   };
 
   auto it = tokenMap.find(value);
