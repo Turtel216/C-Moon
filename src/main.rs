@@ -1,3 +1,8 @@
+use lexer::Lexer;
+
+mod ast;
+mod lexer;
+
 fn main() {
-    println!("Hello, world!");
+    let mut scanner = Lexer::new("int main() { return 1 + 2; }");
 }
