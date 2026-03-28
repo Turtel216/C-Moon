@@ -1,8 +1,8 @@
-use lexer::Lexer;
+use ast::Expr;
+use lexer::{Lexer, TokenKind};
 
 mod ast;
 mod lexer;
+mod printer;
 
-fn main() {
-    let mut scanner = Lexer::new("int main() { return 1 + 2; }");
-}
+fn main() {}
