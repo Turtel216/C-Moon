@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::frontend::ast::*;
 use std::fmt::{self, Write};
 
 pub struct AstPrinter {

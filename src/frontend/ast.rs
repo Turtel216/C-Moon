@@ -1,4 +1,4 @@
-use crate::lexer::Span;
+use crate::frontend::lexer::Span;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr {

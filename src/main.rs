@@ -1,10 +1,8 @@
-use lexer::Lexer;
-use parser::Parser;
+use frontend::lexer::Lexer;
+use frontend::parser::Parser;
 use printer::ast_printer::AstPrinter;
 
-mod ast;
-mod lexer;
-mod parser;
+mod frontend;
 mod printer;
 
 fn main() {

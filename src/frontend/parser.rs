@@ -1,5 +1,5 @@
-use crate::ast::*;
-use crate::lexer::{Lexer, Span, Token, TokenKind};
+use crate::frontend::ast::*;
+use crate::frontend::lexer::{Lexer, Span, Token, TokenKind};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParseError {
@@ -790,7 +790,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::Lexer;
+    use crate::frontend::lexer::Lexer;
 
     fn parse_ok(src: &str) -> Vec<Decl> {
         let lexer = Lexer::new(src);
