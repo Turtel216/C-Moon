@@ -404,6 +404,64 @@ impl<'a> Lexer<'a> {
                 }
             }
 
+            b'*' => {
+                if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::StarEq
+                } else {
+                    TokenKind::Star
+                }
+            }
+            b'/' => {
+                if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::SlashEq
+                } else {
+                    TokenKind::Slash
+                }
+            }
+            b'%' => {
+                if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::PercentEq
+                } else {
+                    TokenKind::Percent
+                }
+            }
+            b'&' => {
+                if self.peek() == Some(b'&') {
+                    self.advance();
+                    TokenKind::AmpAmp
+                } else if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::AmpEq
+                } else {
+                    TokenKind::Ampersand
+                }
+            }
+            b'|' => {
+                if self.peek() == Some(b'|') {
+                    self.advance();
+                    TokenKind::PipePipe
+                } else if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::PipeEq
+                } else {
+                    TokenKind::Pipe
+                }
+            }
+            b'^' => {
+                if self.peek() == Some(b'=') {
+                    self.advance();
+                    TokenKind::CaretEq
+                } else {
+                    TokenKind::Caret
+                }
+            }
+            b'~' => TokenKind::Tilde,
+            b'?' => TokenKind::Question,
+            b':' => TokenKind::Colon,
+
             // Basic Punctuation
             b'(' => TokenKind::LParen,
             b')' => TokenKind::RParen,
