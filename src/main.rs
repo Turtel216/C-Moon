@@ -4,10 +4,11 @@ use frontend::semantic::SemanticAnalyzer;
 use printer::ast_printer::AstPrinter;
 
 mod frontend;
+mod middle;
 mod printer;
 
 fn main() {
-    let lexer = Lexer::new("int main() { return 0 + 1; } ");
+    let lexer = Lexer::new("int main() { int x = 0 << 1; return x + 1; } ");
     let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
     let tu = parser.parse_translation_unit().expect("parse failed");
     let mut sem = SemanticAnalyzer::new();

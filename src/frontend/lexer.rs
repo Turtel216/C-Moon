@@ -3,7 +3,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     // Keywords
-    Auto,
+    //Auto, Unsupported for now
     Break,
     Case,
     Char,
@@ -21,7 +21,7 @@ pub enum TokenKind {
     If,
     Int,
     Long,
-    Register,
+    //Register, Unsupported for now
     Return,
     Short,
     Signed,
@@ -212,7 +212,7 @@ impl<'a> Lexer<'a> {
 
     fn check_keyword(lexeme: &str) -> Option<TokenKind> {
         match lexeme {
-            "auto" => Some(TokenKind::Auto),
+            //"auto" => Some(TokenKind::Auto),
             "break" => Some(TokenKind::Break),
             "case" => Some(TokenKind::Case),
             "char" => Some(TokenKind::Char),
@@ -230,7 +230,7 @@ impl<'a> Lexer<'a> {
             "if" => Some(TokenKind::If),
             "int" => Some(TokenKind::Int),
             "long" => Some(TokenKind::Long),
-            "register" => Some(TokenKind::Register),
+            //"register" => Some(TokenKind::Register),
             "return" => Some(TokenKind::Return),
             "short" => Some(TokenKind::Short),
             "signed" => Some(TokenKind::Signed),
