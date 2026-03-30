@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::frontend::ast::{
-    BinaryOp, BlockItem, DeclKind, Expr, ExprKind, Literal, Stmt, StmtKind,
+    BinaryOp, BlockItem, Decl, DeclKind, Expr, ExprKind, Literal, Stmt, StmtKind,
 };
 
 // ### TAC IR ###
@@ -37,6 +37,11 @@ pub enum Opcode {
     Jump,        // goto arg1(label)
     BranchIf,    // if arg1 != 0 goto arg2(label)
     BranchIfNot, // if arg1 == 0 goto arg2(label)
+
+    // Function calls and returns
+    Param, // pass arg1 as a parameter
+    Call,  // dest = call arg1 (func label), arg2 (number of args)
+    Ret,   // return arg1
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -124,8 +129,22 @@ impl CFG {
 
 // ### Lowering ###
 
+#[derive(Debug, Clone)]
+pub struct ProgramIr {
+    pub functions: BTreeMap<String, CFG>,
+}
+
+impl ProgramIr {
+    pub fn new() -> Self {
+        Self {
+            functions: BTreeMap::new(),
+        }
+    }
+}
+
 pub struct LoweringContext {
-    pub cfg: CFG,
+    pub program: ProgramIr,
+    current_cfg: Option<CFG>,
     current_block: String,
     temp_counter: usize,
     label_counter: usize,
@@ -133,18 +152,60 @@ pub struct LoweringContext {
 
 impl LoweringContext {
     pub fn new() -> Self {
-        let entry = "entry".to_string();
-        let exit = "exit".to_string();
+        Self {
+            program: ProgramIr::new(),
+            current_cfg: None,
+            current_block: String::new(),
+            temp_counter: 0,
+            label_counter: 0,
+        }
+    }
+
+    pub fn lower_program(mut self, decls: &[Decl]) -> ProgramIr {
+        for decl in decls {
+            match &decl.kind {
+                DeclKind::Function { name, body, .. } => {
+                    let bod = body.clone().unwrap(); // TODO: Fix unsafe unwrap and clone
+                    self.lower_function(name, &bod);
+                }
+                _ => { /* Handle global variables later */ }
+            }
+        }
+        self.program
+    }
+
+    fn lower_function(&mut self, name: &str, body: &Stmt) {
+        // 1. Setup a new CFG for this function
+        let entry = format!("{}_entry", name);
+        let exit = format!("{}_exit", name);
 
         let mut cfg = CFG::new(entry.clone(), exit.clone());
         cfg.add_block(BasicBlock::new(entry.clone()));
         cfg.add_block(BasicBlock::new(exit.clone()));
 
-        Self {
-            cfg,
-            current_block: entry,
-            temp_counter: 0,
-            label_counter: 0,
+        self.current_cfg = Some(cfg);
+        self.current_block = entry.clone();
+
+        // 2. Lower the body
+        self.lower_statement(body);
+
+        // 3. Fallthrough to exit if the last block didn't explicitly return
+        let cur = self.current_block.clone();
+        if cur != exit {
+            self.emit(TACInstruction::new(
+                Opcode::Jump,
+                None,
+                Some(Operand::Label(exit.clone())),
+                None,
+            ));
+            self.add_edge(&cur, &exit);
+        }
+
+        // 4. Save the finished CFG into the Program
+        if let Some(finished_cfg) = self.current_cfg.take() {
+            self.program
+                .functions
+                .insert(name.to_string(), finished_cfg);
         }
     }
 
@@ -152,19 +213,19 @@ impl LoweringContext {
         self.lower_statement(root);
 
         // fallthrough to exit if not already there
-        let cur = self.current_block.clone();
-        if cur != self.cfg.exit {
-            self.emit(TACInstruction::new(
-                Opcode::Jump,
-                None,
-                Some(Operand::Label(self.cfg.exit.clone())),
-                None,
-            ));
-            let exit = self.cfg.exit.clone();
-            self.cfg.add_edge(&cur, &exit);
-        }
+        // let cur = self.current_block.clone();
+        // if cur != self.cfg.exit {
+        //     self.emit(TACInstruction::new(
+        //         Opcode::Jump,
+        //         None,
+        //         Some(Operand::Label(self.cfg.exit.clone())),
+        //         None,
+        //     ));
+        //     let exit = self.cfg.exit.clone();
+        //     self.cfg.add_edge(&cur, &exit);
+        // }
 
-        self.cfg
+        self.current_cfg.unwrap()
     }
 
     fn fresh_temp(&mut self) -> Operand {
@@ -179,7 +240,8 @@ impl LoweringContext {
 
     fn create_block(&mut self, prefix: &str) -> String {
         let label = self.fresh_label(prefix);
-        self.cfg.add_block(BasicBlock::new(label.clone()));
+        let cfg = self.current_cfg.as_mut().expect("Not inside a function!");
+        cfg.add_block(BasicBlock::new(label.clone()));
         label
     }
 
@@ -188,8 +250,14 @@ impl LoweringContext {
     }
 
     fn emit(&mut self, instr: TACInstruction) {
-        let blk = self.cfg.blocks.get_mut(&self.current_block).unwrap();
+        let cfg = self.current_cfg.as_mut().expect("Not inside a function!");
+        let blk = cfg.blocks.get_mut(&self.current_block).unwrap();
         blk.emit(instr);
+    }
+
+    fn add_edge(&mut self, from: &str, to: &str) {
+        let cfg = self.current_cfg.as_mut().expect("Not inside a function!");
+        cfg.add_edge(from, to);
     }
 
     fn lower_statement(&mut self, stmt: &Stmt) {
@@ -218,7 +286,7 @@ impl LoweringContext {
                     Some(cond),
                     Some(Operand::Label(else_label.clone())),
                 ));
-                self.cfg.add_edge(&cur, &else_label);
+                self.add_edge(&cur, &else_label);
 
                 // otherwise -> then
                 self.emit(TACInstruction::new(
@@ -227,7 +295,7 @@ impl LoweringContext {
                     Some(Operand::Label(then_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&cur, &then_label);
+                self.add_edge(&cur, &then_label);
 
                 // then branch
                 self.set_current_block(then_label.clone());
@@ -239,7 +307,7 @@ impl LoweringContext {
                     Some(Operand::Label(end_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&then_end, &end_label);
+                self.add_edge(&then_end, &end_label);
 
                 // else branch (or empty else)
                 self.set_current_block(else_label.clone());
@@ -253,7 +321,7 @@ impl LoweringContext {
                     Some(Operand::Label(end_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&else_end, &end_label);
+                self.add_edge(&else_end, &end_label);
 
                 self.set_current_block(end_label);
             }
@@ -271,7 +339,7 @@ impl LoweringContext {
                     Some(Operand::Label(cond_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&preheader, &cond_label);
+                self.add_edge(&preheader, &cond_label);
 
                 // cond block
                 self.set_current_block(cond_label.clone());
@@ -284,7 +352,7 @@ impl LoweringContext {
                     Some(cond),
                     Some(Operand::Label(end_label.clone())),
                 ));
-                self.cfg.add_edge(&cond_label, &end_label);
+                self.add_edge(&cond_label, &end_label);
 
                 // else -> body
                 self.emit(TACInstruction::new(
@@ -293,7 +361,7 @@ impl LoweringContext {
                     Some(Operand::Label(body_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&cond_label, &body_label);
+                self.add_edge(&cond_label, &body_label);
 
                 // body block
                 self.set_current_block(body_label.clone());
@@ -307,7 +375,7 @@ impl LoweringContext {
                     Some(Operand::Label(cond_label.clone())),
                     None,
                 ));
-                self.cfg.add_edge(&body_end, &cond_label);
+                self.add_edge(&body_end, &cond_label);
 
                 // continue after loop
                 self.set_current_block(end_label);
@@ -338,8 +406,32 @@ impl LoweringContext {
                 }
             }
 
+            StmtKind::Return(expr_opt) => {
+                let ret_val = if let Some(expr) = expr_opt {
+                    Some(self.lower_expression(expr))
+                } else {
+                    None
+                };
+
+                self.emit(TACInstruction::new(Opcode::Ret, None, ret_val, None));
+
+                let exit_label = self.current_cfg.as_ref().unwrap().exit.clone();
+                self.emit(TACInstruction::new(
+                    Opcode::Jump,
+                    None,
+                    Some(Operand::Label(exit_label.clone())),
+                    None,
+                ));
+
+                let cur = self.current_block.clone();
+                self.add_edge(&cur, &exit_label);
+
+                let dead_block = self.create_block("unreachable_after_ret");
+                self.set_current_block(dead_block);
+            }
+
             // Not in current scope; no-op for now
-            StmtKind::Return(_) | StmtKind::For { .. } => {}
+            StmtKind::For { .. } => {}
         }
     }
 

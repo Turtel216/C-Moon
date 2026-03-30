@@ -5,8 +5,8 @@ use std::fmt;
 pub struct IrPrinter;
 
 impl IrPrinter {
-    pub fn print_decl(&mut self, cfg: &CFG, w: &mut impl Write) -> fmt::Result {
-        write!(w, "{}", cfg)
+    pub fn print_ir(program: &ProgramIr, w: &mut impl Write) -> fmt::Result {
+        write!(w, "{}", program)
     }
 }
 
@@ -42,6 +42,9 @@ impl fmt::Display for Opcode {
             Opcode::Jump => "jmp",
             Opcode::BranchIf => "br_if",
             Opcode::BranchIfNot => "br_if_not",
+            Opcode::Call => "call",
+            Opcode::Param => "param",
+            Opcode::Ret => "ret",
         };
         write!(f, "{}", op_str)
     }
@@ -68,6 +71,8 @@ impl fmt::Display for TACInstruction {
             | Opcode::Lt
             | Opcode::Lte
             | Opcode::Gt
+            | Opcode::Param
+            | Opcode::Call
             | Opcode::Gte => {
                 write!(
                     f,
@@ -85,6 +90,9 @@ impl fmt::Display for TACInstruction {
             // Unary Control Flow
             Opcode::Jump => {
                 write!(f, "jmp {}", format_op(&self.arg1))
+            }
+            Opcode::Ret => {
+                write!(f, "ret {}", format_op(&self.arg1))
             }
             // Binary Control Flow
             Opcode::BranchIf | Opcode::BranchIfNot => {
@@ -125,12 +133,19 @@ impl fmt::Display for BasicBlock {
 // CFG Formatting
 impl fmt::Display for CFG {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "=== CFG ===")?;
-        writeln!(f, "Entry: .{}", self.entry)?;
-        writeln!(f, "Exit:  .{}\n", self.exit)?;
-
         for block in self.blocks.values() {
             writeln!(f, "{}", block)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl fmt::Display for ProgramIr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "=== PROGRAM ===")?;
+        for fun in self.functions.clone() {
+            writeln!(f, "{}", fun.1)?;
         }
 
         Ok(())
