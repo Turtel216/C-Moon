@@ -1,0 +1,554 @@
+use std::collections::HashMap;
+use std::fmt;
+
+use crate::frontend::ast::{
+    BinaryOp, BlockItem, CType, Decl, DeclKind, Expr, ExprKind, Literal, ParamDecl, Stmt, StmtKind,
+    UnaryOp,
+};
+use crate::frontend::lexer::Span;
+
+/// Convenient semantic result alias.
+pub type SemanticResult<T> = Result<T, SemanticError>;
+
+/// A semantic error produced during name resolution / type checking.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SemanticError {
+    UndeclaredVariable {
+        name: String,
+        span: Span,
+    },
+    RedeclaredVariable {
+        name: String,
+        span: Span,
+    },
+    TypeError {
+        expected: Type,
+        found: Type,
+        span: Span,
+        context: &'static str,
+    },
+    InvalidAssignmentTarget {
+        span: Span,
+    },
+    UnsupportedType {
+        ty: CType,
+        span: Span,
+        context: &'static str,
+    },
+}
+
+impl fmt::Display for SemanticError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SemanticError::UndeclaredVariable { name, .. } => {
+                write!(f, "use of undeclared variable `{name}`")
+            }
+            SemanticError::RedeclaredVariable { name, .. } => {
+                write!(f, "redeclaration of variable `{name}` in the same scope")
+            }
+            SemanticError::TypeError {
+                expected,
+                found,
+                context,
+                ..
+            } => {
+                write!(
+                    f,
+                    "type mismatch in {context}: expected `{expected}`, found `{found}`"
+                )
+            }
+            SemanticError::InvalidAssignmentTarget { .. } => {
+                write!(f, "left-hand side of assignment is not assignable")
+            }
+            SemanticError::UnsupportedType { ty, context, .. } => {
+                write!(
+                    f,
+                    "unsupported type `{ty:?}` in {context} (only `int` is supported currently)"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for SemanticError {}
+
+/// Internal semantic type model for the current compiler stage.
+/// Keep this intentionally small while your language support is small.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Type {
+    Int,
+    Void,
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Type::Int => write!(f, "int"),
+            Type::Void => write!(f, "void"),
+        }
+    }
+}
+
+fn ctype_to_type(ty: &CType, span: Span, context: &'static str) -> SemanticResult<Type> {
+    match ty {
+        CType::Int => Ok(Type::Int),
+        CType::Void => Ok(Type::Void),
+        _ => Err(SemanticError::UnsupportedType {
+            ty: ty.clone(),
+            span,
+            context,
+        }),
+    }
+}
+
+/// Lexical-scope symbol table.
+/// Each scope is a hash map from identifier -> semantic type.
+#[derive(Debug, Default)]
+pub struct SymbolTable {
+    scopes: Vec<HashMap<String, Type>>,
+}
+
+impl SymbolTable {
+    pub fn new() -> Self {
+        Self { scopes: Vec::new() }
+    }
+
+    pub fn push_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scopes.pop();
+    }
+
+    /// Define a symbol in the current scope.
+    /// Fails if already declared in *this* scope.
+    pub fn define(&mut self, name: String, ty: Type) -> bool {
+        if let Some(scope) = self.scopes.last_mut() {
+            if scope.contains_key(&name) {
+                return false;
+            }
+            scope.insert(name, ty);
+            true
+        } else {
+            // If no scope exists, create a global scope eagerly.
+            let mut scope = HashMap::new();
+            scope.insert(name, ty);
+            self.scopes.push(scope);
+            true
+        }
+    }
+
+    /// Resolve a symbol, searching from innermost to outermost scope.
+    pub fn resolve(&self, name: &str) -> Option<Type> {
+        self.scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.get(name).cloned())
+    }
+}
+
+/// Semantic analyzer for declarations/statements/expressions.
+pub struct SemanticAnalyzer {
+    symbols: SymbolTable,
+    current_function_return: Option<Type>,
+}
+
+impl Default for SemanticAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SemanticAnalyzer {
+    pub fn new() -> Self {
+        let mut symbols = SymbolTable::new();
+        symbols.push_scope(); // global scope
+        Self {
+            symbols,
+            current_function_return: None,
+        }
+    }
+
+    /// Analyze a translation unit (top-level declarations).
+    pub fn analyze_program(&mut self, decls: &[Decl]) -> SemanticResult<()> {
+        for decl in decls {
+            self.analyze_decl(decl)?;
+        }
+        Ok(())
+    }
+
+    fn analyze_decl(&mut self, decl: &Decl) -> SemanticResult<()> {
+        match &decl.kind {
+            DeclKind::Variable {
+                ty,
+                name,
+                initializer,
+            } => {
+                let var_ty = ctype_to_type(ty, decl.span, "variable declaration")?;
+                if var_ty == Type::Void {
+                    return Err(SemanticError::TypeError {
+                        expected: Type::Int,
+                        found: Type::Void,
+                        span: decl.span,
+                        context: "variable declaration",
+                    });
+                }
+
+                if !self.symbols.define(name.clone(), var_ty.clone()) {
+                    return Err(SemanticError::RedeclaredVariable {
+                        name: name.clone(),
+                        span: decl.span,
+                    });
+                }
+
+                if let Some(init) = initializer {
+                    let init_ty = self.analyze_expr(init)?;
+                    self.expect_type(&var_ty, &init_ty, init.span, "initializer")?;
+                }
+
+                Ok(())
+            }
+
+            DeclKind::Function {
+                return_ty,
+                name,
+                params,
+                body,
+            } => {
+                // For now: treat function name as declared in current scope.
+                // You can later evolve this to a dedicated function symbol table/signature map.
+                let ret_ty = ctype_to_type(return_ty, decl.span, "function return type")?;
+                if !self.symbols.define(name.clone(), ret_ty.clone()) {
+                    return Err(SemanticError::RedeclaredVariable {
+                        name: name.clone(),
+                        span: decl.span,
+                    });
+                }
+
+                if let Some(body_stmt) = body {
+                    self.symbols.push_scope();
+
+                    for ParamDecl { ty, name } in params {
+                        let pty = ctype_to_type(ty, decl.span, "function parameter")?;
+                        let pname = name.clone().unwrap_or_else(|| "_".to_string());
+                        if !self.symbols.define(pname.clone(), pty) {
+                            return Err(SemanticError::RedeclaredVariable {
+                                name: pname,
+                                span: decl.span,
+                            });
+                        }
+                    }
+
+                    let prev = self.current_function_return.clone();
+                    self.current_function_return = Some(ret_ty);
+
+                    self.analyze_stmt(body_stmt)?;
+
+                    self.current_function_return = prev;
+                    self.symbols.pop_scope();
+                }
+
+                Ok(())
+            }
+
+            DeclKind::Struct { .. } => {
+                // Out of scope for now.
+                Ok(())
+            }
+        }
+    }
+
+    fn analyze_stmt(&mut self, stmt: &Stmt) -> SemanticResult<()> {
+        match &stmt.kind {
+            StmtKind::Expr(expr) => {
+                self.analyze_expr(expr)?;
+                Ok(())
+            }
+
+            StmtKind::Return(opt_expr) => {
+                let expected_ret = self.current_function_return.clone().unwrap_or(Type::Void);
+                match opt_expr {
+                    Some(expr) => {
+                        let found = self.analyze_expr(expr)?;
+                        self.expect_type(&expected_ret, &found, stmt.span, "return statement")
+                    }
+                    None => {
+                        self.expect_type(&expected_ret, &Type::Void, stmt.span, "return statement")
+                    }
+                }
+            }
+
+            StmtKind::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let cond_ty = self.analyze_expr(condition)?;
+                self.expect_type(&Type::Int, &cond_ty, condition.span, "if condition")?;
+                self.analyze_stmt(then_branch)?;
+                if let Some(e) = else_branch {
+                    self.analyze_stmt(e)?;
+                }
+                Ok(())
+            }
+
+            StmtKind::While { condition, body } => {
+                let cond_ty = self.analyze_expr(condition)?;
+                self.expect_type(&Type::Int, &cond_ty, condition.span, "while condition")?;
+                self.analyze_stmt(body)
+            }
+
+            StmtKind::For {
+                init,
+                condition,
+                step,
+                body,
+            } => {
+                self.symbols.push_scope();
+
+                if let Some(init_stmt) = init {
+                    self.analyze_stmt(init_stmt)?;
+                }
+                if let Some(cond) = condition {
+                    let cond_ty = self.analyze_expr(cond)?;
+                    self.expect_type(&Type::Int, &cond_ty, cond.span, "for condition")?;
+                }
+                if let Some(step_expr) = step {
+                    self.analyze_expr(step_expr)?;
+                }
+                self.analyze_stmt(body)?;
+
+                self.symbols.pop_scope();
+                Ok(())
+            }
+
+            StmtKind::Block(items) => {
+                self.symbols.push_scope();
+                for item in items {
+                    match item {
+                        BlockItem::Stmt(s) => self.analyze_stmt(s)?,
+                        BlockItem::Decl(d) => self.analyze_decl(d)?,
+                    }
+                }
+                self.symbols.pop_scope();
+                Ok(())
+            }
+        }
+    }
+
+    fn analyze_expr(&mut self, expr: &Expr) -> SemanticResult<Type> {
+        match &expr.kind {
+            ExprKind::Literal(lit) => match lit {
+                Literal::Int(_) => Ok(Type::Int),
+                _ => Err(SemanticError::UnsupportedType {
+                    ty: match lit {
+                        Literal::Float(_) => CType::Float,
+                        Literal::Char(_) => CType::Char,
+                        Literal::String(_) => CType::Pointer(Box::new(CType::Char)),
+                        Literal::Int(_) => unreachable!(),
+                    },
+                    span: expr.span,
+                    context: "literal",
+                }),
+            },
+
+            ExprKind::Identifier(name) => {
+                self.symbols
+                    .resolve(name)
+                    .ok_or_else(|| SemanticError::UndeclaredVariable {
+                        name: name.clone(),
+                        span: expr.span,
+                    })
+            }
+
+            ExprKind::Binary(op, lhs, rhs) => self.analyze_binary(*op, lhs, rhs, expr.span),
+
+            ExprKind::Unary(op, inner) => self.analyze_unary(*op, inner, expr.span),
+
+            ExprKind::Cast(to_ty, inner) => {
+                let _from = self.analyze_expr(inner)?;
+                ctype_to_type(to_ty, expr.span, "cast")
+            }
+
+            // Out of current language scope: reject with clear unsupported diagnostics.
+            ExprKind::Call { .. }
+            | ExprKind::Index { .. }
+            | ExprKind::MemberAccess { .. }
+            | ExprKind::SizeOf(_) => Err(SemanticError::UnsupportedType {
+                ty: CType::Int,
+                span: expr.span,
+                context: "expression form not yet supported by this semantic phase",
+            }),
+        }
+    }
+
+    fn analyze_binary(
+        &mut self,
+        op: BinaryOp,
+        lhs: &Expr,
+        rhs: &Expr,
+        span: Span,
+    ) -> SemanticResult<Type> {
+        if op == BinaryOp::Assign {
+            if !Self::is_assignable(lhs) {
+                return Err(SemanticError::InvalidAssignmentTarget { span: lhs.span });
+            }
+
+            let lty = self.analyze_expr(lhs)?;
+            let rty = self.analyze_expr(rhs)?;
+            self.expect_type(&lty, &rty, span, "assignment")?;
+            return Ok(lty);
+        }
+
+        let lty = self.analyze_expr(lhs)?;
+        let rty = self.analyze_expr(rhs)?;
+
+        // For current scope: all arithmetic/comparison/logical/bitwise ops require int,int.
+        self.expect_type(&Type::Int, &lty, lhs.span, "binary operation (lhs)")?;
+        self.expect_type(&Type::Int, &rty, rhs.span, "binary operation (rhs)")?;
+
+        // In C these return int (for relational/logical too).
+        Ok(Type::Int)
+    }
+
+    fn analyze_unary(&mut self, op: UnaryOp, inner: &Expr, span: Span) -> SemanticResult<Type> {
+        let ity = self.analyze_expr(inner)?;
+
+        match op {
+            UnaryOp::Neg
+            | UnaryOp::Not
+            | UnaryOp::BitNot
+            | UnaryOp::PreInc
+            | UnaryOp::PreDec
+            | UnaryOp::PostInc
+            | UnaryOp::PostDec => {
+                self.expect_type(&Type::Int, &ity, span, "unary operation")?;
+                Ok(Type::Int)
+            }
+            UnaryOp::Deref | UnaryOp::AddressOf => Err(SemanticError::UnsupportedType {
+                ty: CType::Pointer(Box::new(CType::Int)),
+                span,
+                context: "pointer unary operation",
+            }),
+        }
+    }
+
+    fn expect_type(
+        &self,
+        expected: &Type,
+        found: &Type,
+        span: Span,
+        context: &'static str,
+    ) -> SemanticResult<()> {
+        if expected == found {
+            Ok(())
+        } else {
+            Err(SemanticError::TypeError {
+                expected: expected.clone(),
+                found: found.clone(),
+                span,
+                context,
+            })
+        }
+    }
+
+    fn is_assignable(expr: &Expr) -> bool {
+        matches!(expr.kind, ExprKind::Identifier(_))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::frontend::ast::*;
+    use crate::frontend::lexer::Span;
+
+    fn dummy_span() -> Span {
+        Span {
+            line: 0,
+            column: 0,
+            length: 0,
+        }
+    }
+
+    #[test]
+    fn valid_integer_declaration_and_assignment() {
+        let span = dummy_span();
+
+        let decl_x = Decl {
+            kind: DeclKind::Variable {
+                ty: CType::Int,
+                name: "x".to_string(),
+                initializer: Some(Expr {
+                    kind: ExprKind::Literal(Literal::Int(5)),
+                    span,
+                }),
+            },
+            span,
+        };
+
+        let stmt_assign = Stmt {
+            kind: StmtKind::Expr(Expr {
+                kind: ExprKind::Binary(
+                    BinaryOp::Assign,
+                    Box::new(Expr {
+                        kind: ExprKind::Identifier("x".to_string()),
+                        span,
+                    }),
+                    Box::new(Expr {
+                        kind: ExprKind::Binary(
+                            BinaryOp::Add,
+                            Box::new(Expr {
+                                kind: ExprKind::Identifier("x".to_string()),
+                                span,
+                            }),
+                            Box::new(Expr {
+                                kind: ExprKind::Literal(Literal::Int(1)),
+                                span,
+                            }),
+                        ),
+                        span,
+                    }),
+                ),
+                span,
+            }),
+            span,
+        };
+
+        let mut analyzer = SemanticAnalyzer::new();
+        analyzer.analyze_decl(&decl_x).unwrap();
+        analyzer.analyze_stmt(&stmt_assign).unwrap();
+    }
+
+    #[test]
+    fn fails_on_undeclared_variable() {
+        let span = dummy_span();
+
+        let stmt = Stmt {
+            kind: StmtKind::Expr(Expr {
+                kind: ExprKind::Binary(
+                    BinaryOp::Assign,
+                    Box::new(Expr {
+                        kind: ExprKind::Identifier("y".to_string()),
+                        span,
+                    }),
+                    Box::new(Expr {
+                        kind: ExprKind::Literal(Literal::Int(10)),
+                        span,
+                    }),
+                ),
+                span,
+            }),
+            span,
+        };
+
+        let mut analyzer = SemanticAnalyzer::new();
+        let err = analyzer.analyze_stmt(&stmt).unwrap_err();
+
+        match err {
+            SemanticError::UndeclaredVariable { name, .. } => assert_eq!(name, "y"),
+            other => panic!("expected UndeclaredVariable, got: {other:?}"),
+        }
+    }
+}

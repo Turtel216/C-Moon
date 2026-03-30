@@ -1,5 +1,6 @@
 use frontend::lexer::Lexer;
 use frontend::parser::Parser;
+use frontend::semantic::SemanticAnalyzer;
 use printer::ast_printer::AstPrinter;
 
 mod frontend;
@@ -9,6 +10,8 @@ fn main() {
     let lexer = Lexer::new("int main() { return 0 + 1; } ");
     let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
     let tu = parser.parse_translation_unit().expect("parse failed");
+    let mut sem = SemanticAnalyzer::new();
+    sem.analyze_program(&tu).expect("semantic analysis failed");
 
     let mut output = String::new();
     let mut ast_printer = AstPrinter::new();
