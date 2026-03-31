@@ -586,9 +586,11 @@ mod tests {
                 initializer: Some(Expr {
                     kind: ExprKind::Literal(Literal::Int(5)),
                     span,
+                    id: 0,
                 }),
             },
             span,
+            id: 0,
         };
 
         let stmt_assign = Stmt {
@@ -598,6 +600,7 @@ mod tests {
                     Box::new(Expr {
                         kind: ExprKind::Identifier("x".to_string()),
                         span,
+                        id: 0,
                     }),
                     Box::new(Expr {
                         kind: ExprKind::Binary(
@@ -605,18 +608,23 @@ mod tests {
                             Box::new(Expr {
                                 kind: ExprKind::Identifier("x".to_string()),
                                 span,
+                                id: 0,
                             }),
                             Box::new(Expr {
                                 kind: ExprKind::Literal(Literal::Int(1)),
                                 span,
+                                id: 0,
                             }),
                         ),
                         span,
+                        id: 0,
                     }),
                 ),
                 span,
+                id: 0,
             }),
             span,
+            id: 0,
         };
 
         let mut analyzer = SemanticAnalyzer::new();
@@ -635,15 +643,19 @@ mod tests {
                     Box::new(Expr {
                         kind: ExprKind::Identifier("y".to_string()),
                         span,
+                        id: 0,
                     }),
                     Box::new(Expr {
                         kind: ExprKind::Literal(Literal::Int(10)),
                         span,
+                        id: 0,
                     }),
                 ),
                 span,
+                id: 0,
             }),
             span,
+            id: 0,
         };
 
         let mut analyzer = SemanticAnalyzer::new();

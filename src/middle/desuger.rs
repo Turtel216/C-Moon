@@ -569,6 +569,7 @@ mod tests {
         Expr {
             kind: ExprKind::Literal(Literal::Int(v)),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -576,6 +577,7 @@ mod tests {
         Expr {
             kind: ExprKind::Identifier(name.to_string()),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -583,6 +585,7 @@ mod tests {
         Expr {
             kind: ExprKind::Binary(op, Box::new(lhs), Box::new(rhs)),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -590,6 +593,7 @@ mod tests {
         Expr {
             kind: ExprKind::Binary(BinaryOp::Assign, Box::new(lhs), Box::new(rhs)),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -597,6 +601,7 @@ mod tests {
         Stmt {
             kind: StmtKind::Expr(expr),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -605,6 +610,7 @@ mod tests {
         Stmt {
             kind: StmtKind::Block(items),
             span: dummy_span(),
+            id: 0,
         }
     }
 
@@ -700,6 +706,7 @@ mod tests {
                 else_branch: Some(Box::new(else_branch)),
             },
             span: dummy_span(),
+            id: 0,
         };
 
         ctx.lower_statement(&ast);
@@ -739,6 +746,7 @@ mod tests {
                 body: Box::new(body),
             },
             span: dummy_span(),
+            id: 0,
         };
 
         ctx.lower_statement(&ast);
@@ -789,6 +797,7 @@ mod tests {
         let body = stmt_block(vec![Stmt {
             kind: StmtKind::Return(Some(int(42))),
             span: dummy_span(),
+            id: 0,
         }]);
 
         let decl = Decl {
@@ -799,6 +808,7 @@ mod tests {
                 params: Vec::new(),
             },
             span: dummy_span(),
+            id: 0,
         };
 
         let program = ctx.lower_program(&[decl]);
@@ -833,6 +843,7 @@ mod tests {
                     args,
                 },
                 span: dummy_span(),
+                id: 0,
             }
         }
 

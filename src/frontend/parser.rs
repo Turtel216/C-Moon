@@ -12,6 +12,7 @@ type PResult<T> = Result<T, ParseError>;
 pub struct Parser<'a> {
     tokens: Vec<Token<'a>>,
     pos: usize,
+    next_node_id: u32,
 }
 
 impl<'a> Parser<'a> {
@@ -31,7 +32,11 @@ impl<'a> Parser<'a> {
                 break;
             }
         }
-        Ok(Self { tokens, pos: 0 })
+        Ok(Self {
+            tokens,
+            pos: 0,
+            next_node_id: 0,
+        })
     }
 
     pub fn parse_translation_unit(&mut self) -> PResult<Vec<Decl>> {
@@ -73,6 +78,7 @@ impl<'a> Parser<'a> {
                     body,
                 },
                 span: self.prev_span(),
+                id: self.allocate_id(),
             })
         } else {
             // variable
@@ -92,6 +98,7 @@ impl<'a> Parser<'a> {
                     initializer,
                 },
                 span: self.prev_span(),
+                id: self.allocate_id(),
             })
         }
     }
@@ -116,6 +123,7 @@ impl<'a> Parser<'a> {
                         initializer: None,
                     },
                     span: self.prev_span(),
+                    id: self.allocate_id(),
                 });
             }
             self.expect(TokenKind::RBrace, "expected '}' after struct body")?;
@@ -128,6 +136,7 @@ impl<'a> Parser<'a> {
         Ok(Decl {
             kind: DeclKind::Struct { name, members },
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -228,6 +237,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt {
             kind: StmtKind::Expr(expr),
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -246,6 +256,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt {
             kind: StmtKind::Block(items),
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -266,6 +277,7 @@ impl<'a> Parser<'a> {
                                 name: mname,
                                 initializer: None,
                             },
+                            id: self.allocate_id(),
                             span: self.prev_span(),
                         });
                     }
@@ -280,6 +292,7 @@ impl<'a> Parser<'a> {
                             members,
                         },
                         span: self.prev_span(),
+                        id: self.allocate_id(),
                     });
                 } else {
                     // struct type + var decl
@@ -303,6 +316,7 @@ impl<'a> Parser<'a> {
                             name,
                             initializer,
                         },
+                        id: self.allocate_id(),
                         span: self.prev_span(),
                     });
                 }
@@ -325,6 +339,7 @@ impl<'a> Parser<'a> {
                 name,
                 initializer,
             },
+            id: self.allocate_id(),
             span: self.prev_span(),
         })
     }
@@ -346,6 +361,7 @@ impl<'a> Parser<'a> {
                 else_branch,
             },
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -357,6 +373,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt {
             kind: StmtKind::While { condition, body },
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -370,6 +387,7 @@ impl<'a> Parser<'a> {
             let fake_stmt = Stmt {
                 kind: StmtKind::Block(vec![BlockItem::Decl(d)]),
                 span: self.prev_span(),
+                id: self.allocate_id(),
             };
             Some(Box::new(fake_stmt))
         } else {
@@ -378,6 +396,7 @@ impl<'a> Parser<'a> {
             Some(Box::new(Stmt {
                 kind: StmtKind::Expr(e),
                 span: self.prev_span(),
+                id: self.allocate_id(),
             }))
         };
 
@@ -405,6 +424,7 @@ impl<'a> Parser<'a> {
                 body,
             },
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -418,6 +438,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt {
             kind: StmtKind::Return(expr),
             span: self.prev_span(),
+            id: self.allocate_id(),
         })
     }
 
@@ -433,6 +454,7 @@ impl<'a> Parser<'a> {
             left = Expr {
                 kind: ExprKind::Binary(BinaryOp::Assign, Box::new(left), Box::new(right)),
                 span,
+                id: self.allocate_id(),
             };
         }
         Ok(left)
@@ -457,6 +479,7 @@ impl<'a> Parser<'a> {
             lhs = Expr {
                 kind: ExprKind::Binary(op, Box::new(lhs), Box::new(rhs)),
                 span,
+                id: self.allocate_id(),
             };
         }
 
@@ -470,6 +493,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::Neg, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::Bang) {
@@ -477,6 +501,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::Not, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::Tilde) {
@@ -484,6 +509,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::BitNot, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::Star) {
@@ -491,6 +517,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::Deref, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::Ampersand) {
@@ -498,6 +525,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::AddressOf, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::PlusPlus) {
@@ -505,6 +533,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::PreInc, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::MinusMinus) {
@@ -512,6 +541,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Unary(UnaryOp::PreDec, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
         if self.match_kind(TokenKind::Sizeof) {
@@ -521,6 +551,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::SizeOf(Box::new(inner)),
                 span,
+                id: self.allocate_id(),
             });
         }
 
@@ -533,6 +564,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr {
                 kind: ExprKind::Cast(ty, Box::new(expr)),
                 span,
+                id: self.allocate_id(),
             });
         }
 
@@ -561,6 +593,7 @@ impl<'a> Parser<'a> {
                         args,
                     },
                     span,
+                    id: self.allocate_id(),
                 };
                 continue;
             }
@@ -575,6 +608,7 @@ impl<'a> Parser<'a> {
                         index: Box::new(idx),
                     },
                     span,
+                    id: self.allocate_id(),
                 };
                 continue;
             }
@@ -593,6 +627,7 @@ impl<'a> Parser<'a> {
                         is_arrow,
                     },
                     span,
+                    id: self.allocate_id(),
                 };
                 continue;
             }
@@ -602,6 +637,7 @@ impl<'a> Parser<'a> {
                 expr = Expr {
                     kind: ExprKind::Unary(UnaryOp::PostInc, Box::new(expr)),
                     span,
+                    id: self.allocate_id(),
                 };
                 continue;
             }
@@ -611,6 +647,7 @@ impl<'a> Parser<'a> {
                 expr = Expr {
                     kind: ExprKind::Unary(UnaryOp::PostDec, Box::new(expr)),
                     span,
+                    id: self.allocate_id(),
                 };
                 continue;
             }
@@ -629,6 +666,7 @@ impl<'a> Parser<'a> {
                 Ok(Expr {
                     kind: ExprKind::Identifier(tok.lexeme.to_string()),
                     span: tok.span,
+                    id: self.allocate_id(),
                 })
             }
             TokenKind::IntegerLiteral => {
@@ -637,6 +675,7 @@ impl<'a> Parser<'a> {
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::Int(v)),
                     span: tok.span,
+                    id: self.allocate_id(),
                 })
             }
             TokenKind::FloatLiteral => {
@@ -645,6 +684,7 @@ impl<'a> Parser<'a> {
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::Float(v)),
                     span: tok.span,
+                    id: self.allocate_id(),
                 })
             }
             TokenKind::StringLiteral => {
@@ -653,6 +693,7 @@ impl<'a> Parser<'a> {
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::String(s)),
                     span: tok.span,
+                    id: self.allocate_id(),
                 })
             }
             TokenKind::CharLiteral => {
@@ -662,6 +703,7 @@ impl<'a> Parser<'a> {
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::Char(val)),
                     span: tok.span,
+                    id: self.allocate_id(),
                 })
             }
             TokenKind::LParen => {
@@ -784,6 +826,12 @@ impl<'a> Parser<'a> {
             message: msg.to_string(),
             span: self.current().span,
         })
+    }
+
+    fn allocate_id(&mut self) -> NodeId {
+        let id = self.next_node_id;
+        self.next_node_id += 1;
+        id
     }
 }
 

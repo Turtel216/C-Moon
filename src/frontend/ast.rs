@@ -1,7 +1,10 @@
 use crate::frontend::lexer::Span;
 
+pub type NodeId = u32;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr {
+    pub id: NodeId,
     pub kind: ExprKind,
     pub span: Span,
 }
@@ -34,6 +37,7 @@ pub enum ExprKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stmt {
+    pub id: NodeId,
     pub kind: StmtKind,
     pub span: Span,
 }
@@ -72,6 +76,7 @@ pub enum BlockItem {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Decl {
+    pub id: NodeId,
     pub kind: DeclKind,
     pub span: Span,
 }
