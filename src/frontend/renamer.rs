@@ -300,3 +300,302 @@ pub fn resolve_names(program_decls: &[Decl]) -> RenameResult<ResolutionMap> {
 
     Ok(renamer.into_resolution_map())
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::frontend::lexer::Span;
+
+    // ### Minimal test helpers ###
+    fn nid(n: u32) -> NodeId {
+        n
+    }
+
+    fn int_ty() -> CType {
+        CType::Int
+    }
+
+    fn dummy_span() -> Span {
+        Span {
+            line: 0,
+            column: 0,
+            length: 0,
+        }
+    }
+
+    fn ident(id: u32, name: &str) -> Expr {
+        Expr {
+            id: nid(id),
+            span: dummy_span(),
+            kind: ExprKind::Identifier(name.to_string()),
+        }
+    }
+
+    fn int_lit(id: u32, v: i64) -> Expr {
+        Expr {
+            id: nid(id),
+            span: dummy_span(),
+            kind: ExprKind::Literal(Literal::Int(v)),
+        }
+    }
+
+    fn add(id: u32, l: Expr, r: Expr) -> Expr {
+        Expr {
+            id: nid(id),
+            span: dummy_span(),
+            kind: ExprKind::Binary(BinaryOp::Add, Box::new(l), Box::new(r)),
+        }
+    }
+
+    fn lt(id: u32, l: Expr, r: Expr) -> Expr {
+        Expr {
+            id: nid(id),
+            span: dummy_span(),
+            kind: ExprKind::Binary(BinaryOp::Lt, Box::new(l), Box::new(r)),
+        }
+    }
+
+    fn call(id: u32, callee: Expr, args: Vec<Expr>) -> Expr {
+        Expr {
+            id: nid(id),
+            span: dummy_span(),
+            kind: ExprKind::Call {
+                callee: Box::new(callee),
+                args,
+            },
+        }
+    }
+
+    fn var_decl(id: u32, name: &str, init: Option<Expr>) -> Decl {
+        Decl {
+            id: nid(id),
+            span: dummy_span(),
+            kind: DeclKind::Variable {
+                ty: int_ty(),
+                name: name.to_string(),
+                initializer: init,
+            },
+        }
+    }
+
+    fn ret_stmt(id: u32, e: Option<Expr>) -> Stmt {
+        Stmt {
+            id: nid(id),
+            span: dummy_span(),
+            kind: StmtKind::Return(e),
+        }
+    }
+
+    fn expr_stmt(id: u32, e: Expr) -> Stmt {
+        Stmt {
+            id: nid(id),
+            span: dummy_span(),
+            kind: StmtKind::Expr(e),
+        }
+    }
+
+    fn block_stmt(id: u32, items: Vec<BlockItem>) -> Stmt {
+        Stmt {
+            id: nid(id),
+            span: dummy_span(),
+            kind: StmtKind::Block(items),
+        }
+    }
+
+    fn if_stmt(id: u32, cond: Expr, then_branch: Stmt, else_branch: Option<Stmt>) -> Stmt {
+        Stmt {
+            id: nid(id),
+            span: dummy_span(),
+            kind: StmtKind::If {
+                condition: cond,
+                then_branch: Box::new(then_branch),
+                else_branch: else_branch.map(Box::new),
+            },
+        }
+    }
+
+    fn fn_decl(id: u32, name: &str, params: Vec<ParamDecl>, body: Option<Stmt>) -> Decl {
+        Decl {
+            id: nid(id),
+            span: dummy_span(),
+            kind: DeclKind::Function {
+                return_ty: int_ty(),
+                name: name.to_string(),
+                params,
+                body,
+            },
+        }
+    }
+
+    fn param(name: &str) -> ParamDecl {
+        ParamDecl {
+            ty: int_ty(),
+            name: Some(name.to_string()),
+        }
+    }
+
+    // ### Tests ###
+
+    #[test]
+    fn resolves_function_call_and_shadowing_sample_program() {
+        // int foo(int x, int y) { return x + 1; }
+        let foo_body = block_stmt(
+            10,
+            vec![BlockItem::Stmt(ret_stmt(
+                11,
+                Some(add(12, ident(13, "x"), int_lit(14, 1))),
+            ))],
+        );
+        let foo = fn_decl(1, "foo", vec![param("x"), param("y")], Some(foo_body));
+
+        // int main() {
+        //   int x = 1;
+        //   int y = foo(x, 2);
+        //   { int x = 5; }
+        //   if (x < y) { return 0; }
+        //   return 1;
+        // }
+        let inner_block = block_stmt(
+            30,
+            vec![BlockItem::Decl(var_decl(31, "x", Some(int_lit(32, 5))))],
+        );
+
+        let if_block = block_stmt(
+            40,
+            vec![BlockItem::Stmt(ret_stmt(41, Some(int_lit(42, 0))))],
+        );
+
+        let main_body = block_stmt(
+            20,
+            vec![
+                BlockItem::Decl(var_decl(21, "x", Some(int_lit(22, 1)))),
+                BlockItem::Decl(var_decl(
+                    23,
+                    "y",
+                    Some(call(
+                        24,
+                        ident(25, "foo"),
+                        vec![ident(26, "x"), int_lit(27, 2)],
+                    )),
+                )),
+                BlockItem::Stmt(inner_block),
+                BlockItem::Stmt(if_stmt(
+                    50,
+                    lt(51, ident(52, "x"), ident(53, "y")),
+                    if_block,
+                    None,
+                )),
+                BlockItem::Stmt(ret_stmt(60, Some(int_lit(61, 1)))),
+            ],
+        );
+
+        let main_fn = fn_decl(2, "main", vec![], Some(main_body));
+
+        let map = resolve_names(&[foo, main_fn]).expect("name resolution should succeed");
+
+        // Ensure call callee `foo` is NOT treated as undeclared variable:
+        assert!(
+            map.expr_to_var.get(&25).is_none(),
+            "function name callee should not be assigned a variable id"
+        );
+
+        // `x` in foo return should map to foo param x
+        let foo_param_x_use = map.expr_to_var.get(&13).copied().expect("foo x use mapped");
+
+        // `x` in foo(x, 2) should map to main's x
+        let main_x_use_in_call = map
+            .expr_to_var
+            .get(&26)
+            .copied()
+            .expect("main x use mapped");
+
+        // `x` and `y` in if (x < y)
+        let main_x_use_in_if = map.expr_to_var.get(&52).copied().expect("if x mapped");
+        let main_y_use_in_if = map.expr_to_var.get(&53).copied().expect("if y mapped");
+
+        // shadowed x decl in inner block
+        let inner_x_decl = map
+            .decl_to_var
+            .get(&31)
+            .copied()
+            .expect("inner x decl mapped");
+        let main_x_decl = map
+            .decl_to_var
+            .get(&21)
+            .copied()
+            .expect("main x decl mapped");
+
+        assert_eq!(main_x_use_in_call, main_x_decl);
+        assert_eq!(main_x_use_in_if, main_x_decl);
+        assert_eq!(main_y_use_in_if, map.decl_to_var[&23]);
+        assert_ne!(
+            inner_x_decl, main_x_decl,
+            "shadowed x must have different id"
+        );
+        assert_ne!(
+            foo_param_x_use, main_x_decl,
+            "foo param x is distinct from main x"
+        );
+    }
+
+    #[test]
+    fn errors_on_undeclared_variable() {
+        // int main() { return z; }
+        let main_body = block_stmt(
+            100,
+            vec![BlockItem::Stmt(ret_stmt(101, Some(ident(102, "z"))))],
+        );
+        let main_fn = fn_decl(103, "main", vec![], Some(main_body));
+
+        let err = resolve_names(&[main_fn]).unwrap_err();
+        match err.kind {
+            RenameErrorKind::UndeclaredVariable { name } => assert_eq!(name, "z"),
+            other => panic!("expected UndeclaredVariable, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn errors_on_redeclaration_in_same_scope() {
+        // int main() { int x = 1; int x = 2; return x; }
+        let main_body = block_stmt(
+            200,
+            vec![
+                BlockItem::Decl(var_decl(201, "x", Some(int_lit(202, 1)))),
+                BlockItem::Decl(var_decl(203, "x", Some(int_lit(204, 2)))),
+                BlockItem::Stmt(ret_stmt(205, Some(ident(206, "x")))),
+            ],
+        );
+        let main_fn = fn_decl(207, "main", vec![], Some(main_body));
+
+        let err = resolve_names(&[main_fn]).unwrap_err();
+        match err.kind {
+            RenameErrorKind::RedeclarationInSameScope { name } => assert_eq!(name, "x"),
+            other => panic!("expected RedeclarationInSameScope, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn allows_shadowing_in_nested_block() {
+        // int main() { int x = 1; { int x = 2; } return x; }
+        let nested = block_stmt(
+            300,
+            vec![BlockItem::Decl(var_decl(301, "x", Some(int_lit(302, 2))))],
+        );
+        let body = block_stmt(
+            303,
+            vec![
+                BlockItem::Decl(var_decl(304, "x", Some(int_lit(305, 1)))),
+                BlockItem::Stmt(nested),
+                BlockItem::Stmt(ret_stmt(306, Some(ident(307, "x")))),
+            ],
+        );
+        let main_fn = fn_decl(308, "main", vec![], Some(body));
+
+        let map = resolve_names(&[main_fn]).expect("should allow shadowing");
+        let outer_x = map.decl_to_var[&304];
+        let inner_x = map.decl_to_var[&301];
+        let ret_x = map.expr_to_var[&307];
+
+        assert_ne!(outer_x, inner_x);
+        assert_eq!(ret_x, outer_x, "after nested block, x resolves to outer x");
+    }
+}
