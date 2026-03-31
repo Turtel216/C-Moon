@@ -15,7 +15,9 @@ fn main() {
 int main() {
  int x = 2;
  int y = x;
+ if (x == y) {
  x = x + y;
+}
  return x;
 }
 

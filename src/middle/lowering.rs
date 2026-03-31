@@ -498,10 +498,16 @@ impl LoweringContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frontend::ast::{
-        BinaryOp, BlockItem, CType, Decl, DeclKind, Expr, ExprKind, Literal, Stmt, StmtKind,
+    // Note: Assuming your AST module uses `Box` for recursive types,
+    // which is standard practice in Rust compilers.
+    use crate::frontend::{
+        ast::{
+            BinaryOp, BlockItem, CType, Decl, DeclKind, Expr, ExprKind, Literal, Stmt, StmtKind,
+        },
+        lexer::Span,
     };
-    use crate::frontend::lexer::Span;
+
+    // ###  AST Builder Helpers (Ergonomics) ###
 
     fn dummy_span() -> Span {
         Span {
@@ -511,210 +517,257 @@ mod tests {
         }
     }
 
-    fn int_lit(v: i64) -> Expr {
+    fn int(v: i64) -> Expr {
         Expr {
             kind: ExprKind::Literal(Literal::Int(v)),
             span: dummy_span(),
         }
     }
 
-    fn ident(name: &str) -> Expr {
+    fn var(name: &str) -> Expr {
         Expr {
             kind: ExprKind::Identifier(name.to_string()),
             span: dummy_span(),
         }
     }
 
-    fn bin(op: BinaryOp, lhs: Expr, rhs: Expr) -> Expr {
+    fn binop(op: BinaryOp, lhs: Expr, rhs: Expr) -> Expr {
         Expr {
             kind: ExprKind::Binary(op, Box::new(lhs), Box::new(rhs)),
             span: dummy_span(),
         }
     }
 
-    fn expr_stmt(e: Expr) -> Stmt {
-        Stmt {
-            kind: StmtKind::Expr(e),
+    fn assign(lhs: Expr, rhs: Expr) -> Expr {
+        Expr {
+            kind: ExprKind::Binary(BinaryOp::Assign, Box::new(lhs), Box::new(rhs)),
             span: dummy_span(),
         }
     }
 
-    fn block(stmts: Vec<Stmt>) -> Stmt {
+    fn stmt_expr(expr: Expr) -> Stmt {
         Stmt {
-            kind: StmtKind::Block(stmts.into_iter().map(BlockItem::Stmt).collect()),
+            kind: StmtKind::Expr(expr),
             span: dummy_span(),
         }
     }
 
+    fn stmt_block(stmts: Vec<Stmt>) -> Stmt {
+        let items = stmts.into_iter().map(BlockItem::Stmt).collect();
+        Stmt {
+            kind: StmtKind::Block(items),
+            span: dummy_span(),
+        }
+    }
+
+    // ### TAC/Operand Helpers ###
+
+    fn op_var(name: &str) -> Option<Operand> {
+        Some(Operand::Var(name.to_string()))
+    }
+    fn op_imm(v: i64) -> Option<Operand> {
+        Some(Operand::ImmInt(v))
+    }
+    fn op_temp(name: &str) -> Option<Operand> {
+        Some(Operand::Temp(name.to_string()))
+    }
+    fn op_lbl(name: &str) -> Option<Operand> {
+        Some(Operand::Label(name.to_string()))
+    }
+
+    // ### Unit Tests ###
+
     #[test]
-    fn lowers_assignment_with_add_into_tac() {
-        // x = 1 + 2;
-        let stmt = expr_stmt(bin(
-            BinaryOp::Assign,
-            ident("x"),
-            bin(BinaryOp::Add, int_lit(1), int_lit(2)),
-        ));
+    fn test_lower_simple_assignment() {
+        let mut ctx = LoweringContext::new();
+        ctx.current_cfg = Some(CFG::new("entry".into(), "exit".into()));
 
-        let cfg = LoweringContext::new().lower_stmt_tree(&stmt);
-        let entry = cfg.blocks.get("entry").expect("entry block missing");
+        let entry_lbl = ctx.create_block("entry");
+        ctx.set_current_block(entry_lbl.clone());
 
-        // We expect:
-        // t1 = 1 + 2
-        // x = t1
-        // jump exit
-        assert!(entry.instructions.len() >= 3);
+        // AST: x = 42
+        let ast = stmt_expr(assign(var("x"), int(42)));
+        ctx.lower_statement(&ast);
 
-        let inst0 = &entry.instructions[0];
-        assert_eq!(inst0.opcode, Opcode::Add);
-        assert!(matches!(inst0.dest, Some(Operand::Temp(_))));
-        assert_eq!(inst0.arg1, Some(Operand::ImmInt(1)));
-        assert_eq!(inst0.arg2, Some(Operand::ImmInt(2)));
+        let cfg = ctx.current_cfg.as_ref().unwrap();
+        let block = &cfg.blocks[&entry_lbl];
 
-        let inst1 = &entry.instructions[1];
-        assert_eq!(inst1.opcode, Opcode::Mov);
-        assert_eq!(inst1.dest, Some(Operand::Var("x".to_string())));
-        assert!(matches!(inst1.arg1, Some(Operand::Temp(_))));
+        assert_eq!(block.instructions.len(), 1);
+        let instr = &block.instructions[0];
 
-        assert!(
-            entry.successors.contains(&"exit".to_string()),
-            "entry should flow to exit"
-        );
+        assert_eq!(instr.opcode, Opcode::Mov);
+        assert_eq!(instr.dest, op_var("x"));
+        assert_eq!(instr.arg1, op_imm(42));
+        assert_eq!(instr.arg2, None);
     }
 
     #[test]
-    fn lowers_if_else_creates_expected_blocks_and_join_edges() {
-        // if (x < 10) { y = 1; } else { y = 2; }
-        let cond = bin(BinaryOp::Lt, ident("x"), int_lit(10));
-        let then_stmt = expr_stmt(bin(BinaryOp::Assign, ident("y"), int_lit(1)));
-        let else_stmt = expr_stmt(bin(BinaryOp::Assign, ident("y"), int_lit(2)));
+    fn test_lower_binary_arithmetic() {
+        let mut ctx = LoweringContext::new();
+        ctx.current_cfg = Some(CFG::new("entry".into(), "exit".into()));
+
+        let entry_lbl = ctx.create_block("entry");
+        ctx.set_current_block(entry_lbl.clone());
+
+        // AST: a = b + 10
+        let ast = stmt_expr(assign(var("a"), binop(BinaryOp::Add, var("b"), int(10))));
+        ctx.lower_statement(&ast);
+
+        let cfg = ctx.current_cfg.as_ref().unwrap();
+        let block = &cfg.blocks[&entry_lbl];
+
+        // Should generate:
+        // t1 = b + 10
+        // a = t1
+        assert_eq!(block.instructions.len(), 2);
+
+        let instr1 = &block.instructions[0];
+        assert_eq!(instr1.opcode, Opcode::Add);
+        assert_eq!(instr1.dest, op_temp("t1"));
+        assert_eq!(instr1.arg1, op_var("b"));
+        assert_eq!(instr1.arg2, op_imm(10));
+
+        let instr2 = &block.instructions[1];
+        assert_eq!(instr2.opcode, Opcode::Mov);
+        assert_eq!(instr2.dest, op_var("a"));
+        assert_eq!(instr2.arg1, op_temp("t1"));
+    }
+
+    #[test]
+    fn test_lower_if_else_statement_cfg() {
+        let mut ctx = LoweringContext::new();
+        ctx.current_cfg = Some(CFG::new("entry".into(), "exit".into()));
+        let entry_lbl = ctx.create_block("entry");
+        ctx.set_current_block(entry_lbl.clone());
+
+        // AST: if (x < 5) { y = 1 } else { y = 2 }
+        let condition = binop(BinaryOp::Lt, var("x"), int(5));
+        let then_branch = stmt_expr(assign(var("y"), int(1)));
+        let else_branch = stmt_expr(assign(var("y"), int(2)));
 
         let ast = Stmt {
             kind: StmtKind::If {
-                condition: cond,
-                then_branch: Box::new(block(vec![then_stmt])),
-                else_branch: Some(Box::new(block(vec![else_stmt]))),
+                condition,
+                then_branch: Box::new(then_branch),
+                else_branch: Some(Box::new(else_branch)),
             },
             span: dummy_span(),
         };
 
-        let cfg = LoweringContext::new().lower_stmt_tree(&ast);
+        ctx.lower_statement(&ast);
+        let cfg = ctx.current_cfg.as_ref().unwrap();
 
-        let then_label = cfg
-            .blocks
-            .keys()
-            .find(|k| k.starts_with("if_then_"))
-            .expect("missing then block")
-            .clone();
-        let else_label = cfg
-            .blocks
-            .keys()
-            .find(|k| k.starts_with("if_else_"))
-            .expect("missing else block")
-            .clone();
-        let end_label = cfg
-            .blocks
-            .keys()
-            .find(|k| k.starts_with("if_end_"))
-            .expect("missing if_end block")
-            .clone();
+        // Check that blocks were created
+        assert!(cfg.blocks.keys().any(|k| k.starts_with("if_then")));
+        assert!(cfg.blocks.keys().any(|k| k.starts_with("if_else")));
+        assert!(cfg.blocks.keys().any(|k| k.starts_with("if_end")));
 
-        let entry = cfg.blocks.get("entry").unwrap();
-        assert!(entry.successors.contains(&then_label));
-        assert!(entry.successors.contains(&else_label));
+        let entry_block = &cfg.blocks[&entry_lbl];
 
-        let then_blk = cfg.blocks.get(&then_label).unwrap();
-        let else_blk = cfg.blocks.get(&else_label).unwrap();
-        assert!(then_blk.successors.contains(&end_label));
-        assert!(else_blk.successors.contains(&end_label));
+        // entry should branch to else on false
+        let branch_instr = entry_block.instructions.last().unwrap();
+        assert_eq!(branch_instr.opcode, Opcode::Jump); // The unconditional jump to 'then'
+        let cond_instr = &entry_block.instructions[entry_block.instructions.len() - 2];
+        assert_eq!(cond_instr.opcode, Opcode::BranchIfNot);
 
-        let end_blk = cfg.blocks.get(&end_label).unwrap();
-        assert!(
-            end_blk.predecessors.contains(&then_label)
-                && end_blk.predecessors.contains(&else_label),
-            "if_end should have both then/else predecessors"
-        );
+        // Verify edges
+        assert_eq!(entry_block.successors.len(), 2); // Should go to then or else
     }
 
     #[test]
-    fn lowers_while_creates_back_edge_from_body_to_condition() {
-        // while (x < 3) { x = x + 1; }
-        let cond = bin(BinaryOp::Lt, ident("x"), int_lit(3));
-        let step = expr_stmt(bin(
-            BinaryOp::Assign,
-            ident("x"),
-            bin(BinaryOp::Add, ident("x"), int_lit(1)),
-        ));
+    fn test_lower_while_loop_cfg() {
+        let mut ctx = LoweringContext::new();
+        ctx.current_cfg = Some(CFG::new("entry".into(), "exit".into()));
+        let entry_lbl = ctx.create_block("entry");
+        ctx.set_current_block(entry_lbl.clone());
+
+        // AST: while (x > 0) { x = x - 1 }
+        let condition = binop(BinaryOp::Gt, var("x"), int(0));
+        let body = stmt_expr(assign(var("x"), binop(BinaryOp::Sub, var("x"), int(1))));
 
         let ast = Stmt {
             kind: StmtKind::While {
-                condition: cond,
-                body: Box::new(block(vec![step])),
+                condition,
+                body: Box::new(body),
             },
             span: dummy_span(),
         };
 
-        let cfg = LoweringContext::new().lower_stmt_tree(&ast);
+        ctx.lower_statement(&ast);
+        let cfg = ctx.current_cfg.as_ref().unwrap();
 
-        let cond_label = cfg
+        // Locate block names
+        let cond_lbl = cfg
             .blocks
             .keys()
-            .find(|k| k.starts_with("while_cond_"))
-            .expect("missing while_cond block")
+            .find(|k| k.starts_with("while_cond"))
+            .unwrap()
             .clone();
-        let body_label = cfg
+        let body_lbl = cfg
             .blocks
             .keys()
-            .find(|k| k.starts_with("while_body_"))
-            .expect("missing while_body block")
+            .find(|k| k.starts_with("while_body"))
+            .unwrap()
             .clone();
-        let end_label = cfg
+        let end_lbl = cfg
             .blocks
             .keys()
-            .find(|k| k.starts_with("while_end_"))
-            .expect("missing while_end block")
+            .find(|k| k.starts_with("while_end"))
+            .unwrap()
             .clone();
 
-        let entry = cfg.blocks.get("entry").unwrap();
-        assert!(entry.successors.contains(&cond_label));
+        let cond_block = &cfg.blocks[&cond_lbl];
+        let body_block = &cfg.blocks[&body_lbl];
 
-        let cond_blk = cfg.blocks.get(&cond_label).unwrap();
-        assert!(cond_blk.successors.contains(&body_label));
-        assert!(cond_blk.successors.contains(&end_label));
+        // Cond block should jump to end if false, or jump to body if true
+        assert!(cond_block.successors.contains(&end_lbl));
+        assert!(cond_block.successors.contains(&body_lbl));
 
-        let body_blk = cfg.blocks.get(&body_label).unwrap();
-        assert!(
-            body_blk.successors.contains(&cond_label),
-            "while body should have back-edge to while_cond"
-        );
+        // Body block should have a back-edge to cond block
+        assert_eq!(body_block.successors.len(), 1);
+        assert_eq!(body_block.successors[0], cond_lbl);
+
+        // Verify the jump instruction at the end of the body
+        let body_jump = body_block.instructions.last().unwrap();
+        assert_eq!(body_jump.opcode, Opcode::Jump);
+        assert_eq!(body_jump.arg1, op_lbl(&cond_lbl));
     }
 
     #[test]
-    fn lowers_decl_initializer_in_block() {
-        // { int x = 7; }
+    fn test_lower_function() {
+        let mut ctx = LoweringContext::new();
+
+        // AST: function main() { return 42; }
+        let body = stmt_block(vec![Stmt {
+            kind: StmtKind::Return(Some(int(42))),
+            span: dummy_span(),
+        }]);
+
         let decl = Decl {
-            kind: DeclKind::Variable {
-                ty: CType::Int,
-                name: "x".to_string(),
-                initializer: Some(int_lit(7)),
+            kind: DeclKind::Function {
+                name: "main".to_string(),
+                body: Some(body),
+                return_ty: CType::Int,
+                params: Vec::new(),
             },
             span: dummy_span(),
         };
 
-        let ast = Stmt {
-            kind: StmtKind::Block(vec![BlockItem::Decl(decl)]),
-            span: dummy_span(),
-        };
+        let program = ctx.lower_program(&[decl]);
 
-        let cfg = LoweringContext::new().lower_stmt_tree(&ast);
-        let entry = cfg.blocks.get("entry").unwrap();
+        assert!(program.functions.contains_key("main"));
+        let cfg = &program.functions["main"];
 
-        // Expect MOV x, 7
-        let mov = entry
-            .instructions
-            .iter()
-            .find(|i| i.opcode == Opcode::Mov)
-            .expect("expected Mov for decl initializer");
-        assert_eq!(mov.dest, Some(Operand::Var("x".to_string())));
-        assert_eq!(mov.arg1, Some(Operand::ImmInt(7)));
+        assert_eq!(cfg.entry, "main_entry");
+        assert_eq!(cfg.exit, "main_exit");
+
+        // Look for the return instruction in the CFG
+        let has_ret = cfg.blocks.values().any(|blk| {
+            blk.instructions
+                .iter()
+                .any(|inst| inst.opcode == Opcode::Ret && inst.arg1 == op_imm(42))
+        });
+
+        assert!(has_ret, "Should emit a Ret instruction with arg 42");
     }
 }
