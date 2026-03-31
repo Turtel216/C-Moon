@@ -14,15 +14,16 @@ The compiler is structured as a classic three-pass pipeline to separate language
 
 ## Development Roadmap
 
-**Phase 1: The Frontend (Done MVP)**
+**Phase 1: The Frontend (In Progress)**
 - [x] **Lexical Analysis (Scanner):** Tokenization of C source code.
 - [x] **Syntax Analysis (Parser):** Hand-rolled recursive descent parser building an AST.
 - [x] **AST Visualization:** Debug tooling to print the AST structure to the console.
 - [x] **Semantic Analysis:** Symbol table generation, variable scoping, and basic type checking.
+- [ ] **Renamer:** Name resolution (Scope Renamer) pass.
 
 **Phase 2: The Middle-End (In Progress)**
-- [ ] **IR Generation:** Lowering the AST into Three-Address Code (TAC).
-- [ ] **Control Flow Graph (CFG):** Building basic blocks for optimization analysis.
+- [x] **IR Generation:** Lowering the AST into Three-Address Code (TAC).
+- [x] **Control Flow Graph (CFG):** Building basic blocks for optimization analysis.
 - [ ] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
 - [ ] **Optimization - Dead Code Elimination:** Pruning unreachable instructions.
 
