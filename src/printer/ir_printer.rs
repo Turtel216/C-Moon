@@ -45,6 +45,7 @@ impl fmt::Display for Opcode {
             Opcode::Call => "call",
             Opcode::Param => "param",
             Opcode::Ret => "ret",
+            Opcode::GetParam => "get_param",
         };
         write!(f, "{}", op_str)
     }
@@ -93,6 +94,9 @@ impl fmt::Display for TACInstruction {
             }
             Opcode::Ret => {
                 write!(f, "ret {}", format_op(&self.arg1))
+            }
+            Opcode::GetParam => {
+                write!(f, "get_param {}", format_op(&self.arg1))
             }
             // Binary Control Flow
             Opcode::BranchIf | Opcode::BranchIfNot => {

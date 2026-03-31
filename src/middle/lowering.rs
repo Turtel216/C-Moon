@@ -39,9 +39,10 @@ pub enum Opcode {
     BranchIfNot, // if arg1 == 0 goto arg2(label)
 
     // Function calls and returns
-    Param, // pass arg1 as a parameter
-    Call,  // dest = call arg1 (func label), arg2 (number of args)
-    Ret,   // return arg1
+    Param,    // pass arg1 as a parameter
+    Call,     // dest = call arg1 (func label), arg2 (number of args)
+    Ret,      // return arg1
+    GetParam, // dest = get incoming parameter at index arg1
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -164,18 +165,29 @@ impl LoweringContext {
     pub fn lower_program(mut self, decls: &[Decl]) -> ProgramIr {
         for decl in decls {
             match &decl.kind {
-                DeclKind::Function { name, body, .. } => {
+                DeclKind::Function {
+                    name, body, params, ..
+                } => {
                     let bod = body.clone().unwrap(); // TODO: Fix unsafe unwrap and clone
-                    self.lower_function(name, &bod);
+
+                    // Extract just the parameter names as a Vec<String>
+                    let param_names: Vec<String> = params
+                        .iter()
+                        .map(|p| p.name.clone().expect("expected parameter name"))
+                        .collect();
+
+                    self.lower_function(name, &param_names, &bod);
                 }
-                _ => { /* Handle global variables later */ }
+                _ => {
+                    todo!("Global variables not implemented yet")
+                }
             }
         }
         self.program
     }
 
-    fn lower_function(&mut self, name: &str, body: &Stmt) {
-        // 1. Setup a new CFG for this function
+    fn lower_function(&mut self, name: &str, params: &[String], body: &Stmt) {
+        // Setup a new CFG for this function
         let entry = format!("{}_entry", name);
         let exit = format!("{}_exit", name);
 
@@ -186,10 +198,20 @@ impl LoweringContext {
         self.current_cfg = Some(cfg);
         self.current_block = entry.clone();
 
-        // 2. Lower the body
+        // Bind parameters to local variables
+        for (index, param_name) in params.iter().enumerate() {
+            self.emit(TACInstruction::new(
+                Opcode::GetParam,
+                Some(Operand::Var(param_name.clone())), // dest: local variable
+                Some(Operand::ImmInt(index as i64)),    // arg1: parameter index
+                None,
+            ));
+        }
+
+        // Lower the body
         self.lower_statement(body);
 
-        // 3. Fallthrough to exit if the last block didn't explicitly return
+        // Fallthrough to exit if the last block didn't explicitly return
         let cur = self.current_block.clone();
         if cur != exit {
             self.emit(TACInstruction::new(
@@ -201,7 +223,7 @@ impl LoweringContext {
             self.add_edge(&cur, &exit);
         }
 
-        // 4. Save the finished CFG into the Program
+        // Save the finished CFG into the Program
         if let Some(finished_cfg) = self.current_cfg.take() {
             self.program
                 .functions
