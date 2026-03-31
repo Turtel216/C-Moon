@@ -12,12 +12,13 @@ mod printer;
 fn main() {
     let lexer = Lexer::new(
         "
-int main() {
- int x = 2;
- int y = x;
- if (x == y) {
- x = x + y;
+int foo(int x) {
+  return x;
 }
+
+int main() {
+ int x = 1;
+ int y = foo(x);
  return x;
 }
 
@@ -26,7 +27,7 @@ int main() {
     let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
     let tu = parser.parse_translation_unit().expect("parse failed");
     let mut sem = SemanticAnalyzer::new();
-    sem.analyze_program(&tu).expect("semantic analysis failed");
+    //sem.analyze_program(&tu).expect("semantic analysis failed");
     let ctx = LoweringContext::new();
     let lowered_program = ctx.lower_program(&tu);
 

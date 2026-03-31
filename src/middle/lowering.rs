@@ -483,6 +483,38 @@ impl LoweringContext {
                 t
             }
 
+            ExprKind::Call { callee, args } => {
+                // Lower arguments
+                let mut arg_operands = Vec::with_capacity(args.len());
+                for arg in args {
+                    arg_operands.push(self.lower_expression(arg));
+                }
+
+                // Determine the target of the call.
+                // If it's a direct identifier, its treated as a static Label.
+                // Otherwise lower the expression is lowred (e.g., for function pointers).
+                let callee_op = match &callee.kind {
+                    ExprKind::Identifier(name) => Operand::Label(name.clone()),
+                    _ => self.lower_expression(callee),
+                };
+
+                // Emit Param instructions
+                for arg_op in arg_operands {
+                    self.emit(TACInstruction::new(Opcode::Param, None, Some(arg_op), None));
+                }
+
+                // Emit the Call instruction
+                let ret_temp = self.fresh_temp();
+                self.emit(TACInstruction::new(
+                    Opcode::Call,
+                    Some(ret_temp.clone()),
+                    Some(callee_op),
+                    Some(Operand::ImmInt(args.len() as i64)),
+                ));
+
+                ret_temp
+            }
+
             _ => panic!("Expr {:?} not supported in this lowering phase", expr.kind),
         }
     }
@@ -769,5 +801,55 @@ mod tests {
         });
 
         assert!(has_ret, "Should emit a Ret instruction with arg 42");
+    }
+
+    #[test]
+    fn test_lower_function_call() {
+        let mut ctx = LoweringContext::new();
+        ctx.current_cfg = Some(CFG::new("entry".into(), "exit".into()));
+        let entry_lbl = ctx.create_block("entry");
+        ctx.set_current_block(entry_lbl.clone());
+
+        fn call(callee: Expr, args: Vec<Expr>) -> Expr {
+            Expr {
+                kind: ExprKind::Call {
+                    callee: Box::new(callee),
+                    args,
+                },
+                span: dummy_span(),
+            }
+        }
+
+        // AST: result = compute(x, 42)
+        let ast = stmt_expr(assign(
+            var("result"),
+            call(var("compute"), vec![var("x"), int(42)]),
+        ));
+
+        ctx.lower_statement(&ast);
+
+        let cfg = ctx.current_cfg.as_ref().unwrap();
+        let block = &cfg.blocks[&entry_lbl];
+
+        assert_eq!(block.instructions.len(), 4);
+
+        let inst0 = &block.instructions[0];
+        assert_eq!(inst0.opcode, Opcode::Param);
+        assert_eq!(inst0.arg1, op_var("x"));
+
+        let inst1 = &block.instructions[1];
+        assert_eq!(inst1.opcode, Opcode::Param);
+        assert_eq!(inst1.arg1, op_imm(42));
+
+        let inst2 = &block.instructions[2];
+        assert_eq!(inst2.opcode, Opcode::Call);
+        assert_eq!(inst2.dest, op_temp("t1"));
+        assert_eq!(inst2.arg1, op_lbl("compute")); // Verifies Identifier was turned into a Label
+        assert_eq!(inst2.arg2, op_imm(2));
+
+        let inst3 = &block.instructions[3];
+        assert_eq!(inst3.opcode, Opcode::Mov);
+        assert_eq!(inst3.dest, op_var("result"));
+        assert_eq!(inst3.arg1, op_temp("t1"));
     }
 }
