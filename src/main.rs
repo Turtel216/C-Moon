@@ -12,14 +12,13 @@ mod printer;
 fn main() {
     let lexer = Lexer::new(
         "
-int foo(int x) {
- int y = x;
- return 0;
+int foo(int x, int y) {
+ return x + 1;
 }
 
 int main() {
  int x = 1;
- int y = foo(x);
+ int y = foo(x, 2);
  return x;
 }
 

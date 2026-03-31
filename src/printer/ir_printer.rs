@@ -72,7 +72,6 @@ impl fmt::Display for TACInstruction {
             | Opcode::Lt
             | Opcode::Lte
             | Opcode::Gt
-            | Opcode::Param
             | Opcode::Call
             | Opcode::Gte => {
                 write!(
@@ -95,8 +94,16 @@ impl fmt::Display for TACInstruction {
             Opcode::Ret => {
                 write!(f, "ret {}", format_op(&self.arg1))
             }
+            Opcode::Param => {
+                write!(f, "param {}", format_op(&self.arg1))
+            }
             Opcode::GetParam => {
-                write!(f, "get_param {}", format_op(&self.arg1))
+                write!(
+                    f,
+                    "{} = get_param {}",
+                    format_op(&self.dest),
+                    format_op(&self.arg1)
+                )
             }
             // Binary Control Flow
             Opcode::BranchIf | Opcode::BranchIfNot => {
