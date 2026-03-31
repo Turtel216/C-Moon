@@ -416,12 +416,6 @@ impl LoweringContext {
                 self.emit(TACInstruction::new(Opcode::Ret, None, ret_val, None));
 
                 let exit_label = self.current_cfg.as_ref().unwrap().exit.clone();
-                self.emit(TACInstruction::new(
-                    Opcode::Jump,
-                    None,
-                    Some(Operand::Label(exit_label.clone())),
-                    None,
-                ));
 
                 let cur = self.current_block.clone();
                 self.add_edge(&cur, &exit_label);
