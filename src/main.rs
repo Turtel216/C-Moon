@@ -13,7 +13,8 @@ fn main() {
     let lexer = Lexer::new(
         "
 int foo(int x) {
-  return x;
+ int y = x;
+ return 0;
 }
 
 int main() {
@@ -27,7 +28,7 @@ int main() {
     let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
     let tu = parser.parse_translation_unit().expect("parse failed");
     let mut sem = SemanticAnalyzer::new();
-    //sem.analyze_program(&tu).expect("semantic analysis failed");
+    sem.analyze_program(&tu).expect("semantic analysis failed");
     let ctx = LoweringContext::new();
     let lowered_program = ctx.lower_program(&tu);
 

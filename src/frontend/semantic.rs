@@ -35,6 +35,20 @@ pub enum SemanticError {
         span: Span,
         context: &'static str,
     },
+    UndeclaredFunction {
+        name: String,
+        span: Span,
+    },
+    RedeclaredFunction {
+        name: String,
+        span: Span,
+    },
+    ArgumentCountMismatch {
+        name: String,
+        expected: usize,
+        found: usize,
+        span: Span,
+    },
 }
 
 impl fmt::Display for SemanticError {
@@ -45,6 +59,23 @@ impl fmt::Display for SemanticError {
             }
             SemanticError::RedeclaredVariable { name, .. } => {
                 write!(f, "redeclaration of variable `{name}` in the same scope")
+            }
+            SemanticError::UndeclaredFunction { name, .. } => {
+                write!(f, "call to undeclared function `{name}`")
+            }
+            SemanticError::RedeclaredFunction { name, .. } => {
+                write!(f, "redeclaration of function `{name}`")
+            }
+            SemanticError::ArgumentCountMismatch {
+                name,
+                expected,
+                found,
+                ..
+            } => {
+                write!(
+                    f,
+                    "wrong number of arguments in call to `{name}`: expected {expected}, found {found}"
+                )
             }
             SemanticError::TypeError {
                 expected,
@@ -87,6 +118,12 @@ impl fmt::Display for Type {
             Type::Void => write!(f, "void"),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionSig {
+    pub return_ty: Type,
+    pub param_tys: Vec<Type>,
 }
 
 fn ctype_to_type(ty: &CType, span: Span, context: &'static str) -> SemanticResult<Type> {
@@ -151,6 +188,7 @@ impl SymbolTable {
 /// Semantic analyzer for declarations/statements/expressions.
 pub struct SemanticAnalyzer {
     symbols: SymbolTable,
+    functions: HashMap<String, FunctionSig>,
     current_function_return: Option<Type>,
 }
 
@@ -166,15 +204,51 @@ impl SemanticAnalyzer {
         symbols.push_scope(); // global scope
         Self {
             symbols,
+            functions: HashMap::new(),
             current_function_return: None,
         }
     }
 
     /// Analyze a translation unit (top-level declarations).
     pub fn analyze_program(&mut self, decls: &[Decl]) -> SemanticResult<()> {
+        self.register_function_signatures(decls)?;
         for decl in decls {
             self.analyze_decl(decl)?;
         }
+        Ok(())
+    }
+
+    fn register_function_signatures(&mut self, decls: &[Decl]) -> SemanticResult<()> {
+        for decl in decls {
+            if let DeclKind::Function {
+                return_ty,
+                name,
+                params,
+                ..
+            } = &decl.kind
+            {
+                let ret_ty = ctype_to_type(return_ty, decl.span, "function return type")?;
+                let mut param_tys = Vec::with_capacity(params.len());
+
+                for ParamDecl { ty, .. } in params {
+                    let pty = ctype_to_type(ty, decl.span, "function parameter")?;
+                    param_tys.push(pty);
+                }
+
+                let sig = FunctionSig {
+                    return_ty: ret_ty,
+                    param_tys,
+                };
+
+                if self.functions.insert(name.clone(), sig).is_some() {
+                    return Err(SemanticError::RedeclaredFunction {
+                        name: name.clone(),
+                        span: decl.span,
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -212,19 +286,11 @@ impl SemanticAnalyzer {
 
             DeclKind::Function {
                 return_ty,
-                name,
+                name: _,
                 params,
                 body,
             } => {
-                // For now: treat function name as declared in current scope.
-                // You can later evolve this to a dedicated function symbol table/signature map.
                 let ret_ty = ctype_to_type(return_ty, decl.span, "function return type")?;
-                if !self.symbols.define(name.clone(), ret_ty.clone()) {
-                    return Err(SemanticError::RedeclaredVariable {
-                        name: name.clone(),
-                        span: decl.span,
-                    });
-                }
 
                 if let Some(body_stmt) = body {
                     self.symbols.push_scope();
@@ -371,16 +437,53 @@ impl SemanticAnalyzer {
                 ctype_to_type(to_ty, expr.span, "cast")
             }
 
+            ExprKind::Call { callee, args } => self.analyze_call(callee, args, expr.span),
+
             // Out of current language scope: reject with clear unsupported diagnostics.
-            ExprKind::Call { .. }
-            | ExprKind::Index { .. }
-            | ExprKind::MemberAccess { .. }
-            | ExprKind::SizeOf(_) => Err(SemanticError::UnsupportedType {
-                ty: CType::Int,
-                span: expr.span,
-                context: "expression form not yet supported by this semantic phase",
-            }),
+            ExprKind::Index { .. } | ExprKind::MemberAccess { .. } | ExprKind::SizeOf(_) => {
+                Err(SemanticError::UnsupportedType {
+                    ty: CType::Int,
+                    span: expr.span,
+                    context: "expression form not yet supported by this semantic phase",
+                })
+            }
         }
+    }
+
+    fn analyze_call(&mut self, callee: &Expr, args: &[Expr], span: Span) -> SemanticResult<Type> {
+        let fname = match &callee.kind {
+            ExprKind::Identifier(name) => name,
+            _ => {
+                return Err(SemanticError::UnsupportedType {
+                    ty: CType::Int,
+                    span: callee.span,
+                    context: "non-identifier callee not yet supported",
+                });
+            }
+        };
+
+        let sig = self.functions.get(fname).cloned().ok_or_else(|| {
+            SemanticError::UndeclaredFunction {
+                name: fname.clone(),
+                span,
+            }
+        })?;
+
+        if args.len() != sig.param_tys.len() {
+            return Err(SemanticError::ArgumentCountMismatch {
+                name: fname.clone(),
+                expected: sig.param_tys.len(),
+                found: args.len(),
+                span,
+            });
+        }
+
+        for (arg, expected) in args.iter().zip(sig.param_tys.iter()) {
+            let found = self.analyze_expr(arg)?;
+            self.expect_type(expected, &found, arg.span, "function argument")?;
+        }
+
+        Ok(sig.return_ty)
     }
 
     fn analyze_binary(
