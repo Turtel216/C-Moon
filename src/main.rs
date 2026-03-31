@@ -1,7 +1,7 @@
 use frontend::lexer::Lexer;
 use frontend::parser::Parser;
 use frontend::semantic::SemanticAnalyzer;
-use middle::lowering::LoweringContext;
+use middle::desuger::LoweringContext;
 use printer::ast_printer::AstPrinter;
 use printer::ir_printer::IrPrinter;
 
