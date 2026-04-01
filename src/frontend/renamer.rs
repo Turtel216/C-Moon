@@ -431,6 +431,7 @@ mod tests {
         ParamDecl {
             ty: int_ty(),
             name: Some(name.to_string()),
+            id: 0,
         }
     }
 
