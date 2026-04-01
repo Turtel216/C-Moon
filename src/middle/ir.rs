@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operand {
-    Var(String),
+    Var(usize),
     Temp(String),
     ImmInt(i64),
     Label(String),

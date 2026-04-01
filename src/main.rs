@@ -44,7 +44,7 @@ int main() {
     // Identifier Renaming
     let resolution_map = resolve_names(&tu).expect("Name resolution failed");
 
-    let ctx = LoweringContext::new();
+    let ctx = LoweringContext::new(&resolution_map);
     let lowered_program = ctx.lower_program(&tu);
 
     let mut output = String::new();

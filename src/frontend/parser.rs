@@ -205,6 +205,7 @@ impl<'a> Parser<'a> {
             params.push(ParamDecl {
                 ty,
                 name: if name.is_empty() { None } else { Some(name) },
+                id: self.allocate_id(),
             });
 
             if !self.match_kind(TokenKind::Comma) {

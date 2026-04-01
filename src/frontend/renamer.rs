@@ -134,7 +134,8 @@ impl Renamer {
 
         for p in params {
             if let Some(name) = p.name.as_deref() {
-                let _ = self.env.declare_var(name)?;
+                let param_id = self.env.declare_var(name)?;
+                self.bind_decl_node(p.id, param_id);
             }
         }
 

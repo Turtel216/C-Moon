@@ -295,7 +295,7 @@ impl SemanticAnalyzer {
                 if let Some(body_stmt) = body {
                     self.symbols.push_scope();
 
-                    for ParamDecl { ty, name } in params {
+                    for ParamDecl { ty, name, .. } in params {
                         let pty = ctype_to_type(ty, decl.span, "function parameter")?;
                         let pname = name.clone().unwrap_or_else(|| "_".to_string());
                         if !self.symbols.define(pname.clone(), pty) {

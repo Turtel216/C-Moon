@@ -107,6 +107,7 @@ pub enum DeclKind {
 pub struct ParamDecl {
     pub ty: CType,
     pub name: Option<String>,
+    pub id: NodeId,
 }
 
 /// Representation of C Types

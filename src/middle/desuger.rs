@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use crate::frontend::ast::{
     BinaryOp, BlockItem, Decl, DeclKind, Expr, ExprKind, Literal, Stmt, StmtKind,
 };
+use crate::frontend::renamer::ResolutionMap;
 use crate::middle::ir::*;
 
 #[derive(Debug, Clone)]
@@ -18,18 +19,20 @@ impl ProgramIr {
     }
 }
 
-pub struct LoweringContext {
+pub struct LoweringContext<'a> {
     pub program: ProgramIr,
+    res_map: &'a ResolutionMap,
     current_cfg: Option<CFG>,
     current_block: String,
     temp_counter: usize,
     label_counter: usize,
 }
 
-impl LoweringContext {
-    pub fn new() -> Self {
+impl<'a> LoweringContext<'a> {
+    pub fn new(res_map: &'a ResolutionMap) -> Self {
         Self {
             program: ProgramIr::new(),
+            res_map,
             current_cfg: None,
             current_block: String::new(),
             temp_counter: 0,
@@ -46,10 +49,15 @@ impl LoweringContext {
                     let bod = body.clone().unwrap(); // TODO: Fix unsafe unwrap and clone
 
                     // Extract just the parameter names as a Vec<String>
-                    let param_names: Vec<String> = params
-                        .iter()
-                        .map(|p| p.name.clone().expect("expected parameter name"))
-                        .collect();
+                    let param_names: Vec<usize> =
+                        params
+                            .iter()
+                            .map(|p| {
+                                *self.res_map.decl_to_var.get(&p.id).expect(
+                                    "Compiler Bug: Ranamer failed to map function parameters",
+                                )
+                            })
+                            .collect();
 
                     self.lower_function(name, &param_names, &bod);
                 }
@@ -61,7 +69,7 @@ impl LoweringContext {
         self.program
     }
 
-    fn lower_function(&mut self, name: &str, params: &[String], body: &Stmt) {
+    fn lower_function(&mut self, name: &str, params: &[usize], body: &Stmt) {
         // Setup a new CFG for this function
         let entry = format!("{}_entry", name);
         let exit = format!("{}_exit", name);
@@ -74,11 +82,11 @@ impl LoweringContext {
         self.current_block = entry.clone();
 
         // Bind parameters to local variables
-        for (index, param_name) in params.iter().enumerate() {
+        for (index, param_id) in params.iter().enumerate() {
             self.emit(TACInstruction::new(
                 Opcode::GetParam,
-                Some(Operand::Var(param_name.clone())), // dest: local variable
-                Some(Operand::ImmInt(index as i64)),    // arg1: parameter index
+                Some(Operand::Var(*param_id)), // dest: local variable
+                Some(Operand::ImmInt(index as i64)), // arg1: parameter index
                 None,
             ));
         }
@@ -285,15 +293,20 @@ impl LoweringContext {
                         BlockItem::Decl(d) => {
                             // Minimal handling for variable decl initializer in this phase.
                             if let DeclKind::Variable {
-                                name,
                                 initializer: Some(init),
                                 ..
                             } = &d.kind
                             {
+                                let stmt_id = self
+                                    .res_map
+                                    .decl_to_var
+                                    .get(&d.id)
+                                    .expect("Compiler Bug: Renamer failed to map declaration");
+
                                 let rhs = self.lower_expression(init);
                                 self.emit(TACInstruction::new(
                                     Opcode::Mov,
-                                    Some(Operand::Var(name.clone())),
+                                    Some(Operand::Var(*stmt_id)),
                                     Some(rhs),
                                     None,
                                 ));
@@ -330,19 +343,33 @@ impl LoweringContext {
         match &expr.kind {
             ExprKind::Literal(Literal::Int(v)) => Operand::ImmInt(*v),
 
-            ExprKind::Identifier(name) => Operand::Var(name.clone()),
+            ExprKind::Identifier(_) => {
+                let idf_id = self
+                    .res_map
+                    .expr_to_var
+                    .get(&expr.id)
+                    .expect("Compiler Bug: Renamer failed to map lhs of expression");
+                Operand::Var(*idf_id)
+            }
 
             // x = rhs
             ExprKind::Binary(BinaryOp::Assign, lhs, rhs) => {
                 let rhs_op = self.lower_expression(rhs);
                 let lhs_var = self.expect_lvalue_var(lhs);
+
+                let lhs_id = self
+                    .res_map
+                    .expr_to_var
+                    .get(&lhs_var)
+                    .expect("Compiler Bug: Renamer failed to map lhs of expression");
+
                 self.emit(TACInstruction::new(
                     Opcode::Mov,
-                    Some(Operand::Var(lhs_var.clone())),
+                    Some(Operand::Var(*lhs_id)),
                     Some(rhs_op.clone()),
                     None,
                 ));
-                Operand::Var(lhs_var)
+                Operand::Var(*lhs_id)
             }
 
             // Arithmetic + comparisons used by if/while conditions.
@@ -410,9 +437,9 @@ impl LoweringContext {
         }
     }
 
-    fn expect_lvalue_var(&self, expr: &Expr) -> String {
+    fn expect_lvalue_var(&self, expr: &Expr) -> u32 {
         match &expr.kind {
-            ExprKind::Identifier(name) => name.clone(),
+            ExprKind::Identifier(_) => expr.id,
             _ => panic!("Expected assignable identifier lvalue, got {:?}", expr.kind),
         }
     }
