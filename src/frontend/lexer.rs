@@ -100,7 +100,7 @@ pub enum LexError {
     UnexpectedChar,
     UnterminatedString,
     UnterminatedChar,
-    UnterminatedBlockComment,
+    //UnterminatedBlockComment, TODO: Throw error in skip_whitespace_and_comments()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

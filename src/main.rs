@@ -30,7 +30,6 @@ int main() {
  }
  return 1;
 }
-
 ",
     );
     // Parse program
@@ -44,19 +43,19 @@ int main() {
     // Identifier Renaming
     let resolution_map = resolve_names(&tu).expect("Name resolution failed");
 
+    // Desuger AST into IR
     let ctx = LoweringContext::new(&resolution_map);
     let lowered_program = ctx.lower_program(&tu);
 
     let mut output = String::new();
     let mut ast_printer = AstPrinter::new();
 
-    println!("AST:");
+    println!("=== AST ===");
     for decl in tu {
         let _ = ast_printer.print_decl(&decl, &mut output);
         println!("{}", output);
     }
 
-    println!("\nIR:");
     output.clear();
     let _ = IrPrinter::print_ir(&lowered_program, &mut output);
     println!("{}", output);

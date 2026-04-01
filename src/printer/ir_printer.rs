@@ -15,7 +15,7 @@ impl IrPrinter {
 impl fmt::Display for Operand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Operand::Var(name) => write!(f, "{}", name),
+            Operand::Var(name) => write!(f, "%r{}", name),
             // Prefix temps with '%' to easily distinguish them from source variables
             Operand::Temp(name) => write!(f, "%{}", name),
             Operand::ImmInt(val) => write!(f, "{}", val),
