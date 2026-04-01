@@ -114,25 +114,6 @@ impl<'a> LoweringContext<'a> {
         }
     }
 
-    pub fn lower_stmt_tree(mut self, root: &Stmt) -> CFG {
-        self.lower_statement(root);
-
-        // fallthrough to exit if not already there
-        // let cur = self.current_block.clone();
-        // if cur != self.cfg.exit {
-        //     self.emit(TACInstruction::new(
-        //         Opcode::Jump,
-        //         None,
-        //         Some(Operand::Label(self.cfg.exit.clone())),
-        //         None,
-        //     ));
-        //     let exit = self.cfg.exit.clone();
-        //     self.cfg.add_edge(&cur, &exit);
-        // }
-
-        self.current_cfg.unwrap()
-    }
-
     fn fresh_temp(&mut self) -> Operand {
         self.temp_counter += 1;
         Operand::Temp(format!("t{}", self.temp_counter))
