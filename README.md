@@ -29,7 +29,7 @@ The compiler is structured as a classic three-pass pipeline to separate language
 
 **Phase 3: The Backend (In Progress)**
 - [x] **Instruction Selection:** Mapping TAC operations to x86 instructions.
-- [ ] **Register Allocation:** Implementing a Linear Scan Register Allocator.
+- [x] **Register Allocation:** Implementing a Linear Scan Register Allocator.
 - [ ] **Code Emission:** Generating valid `.s` files assembled via GCC/NASM.
 
 ## Supported Language Subset (Target)
