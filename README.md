@@ -27,8 +27,8 @@ The compiler is structured as a classic three-pass pipeline to separate language
 - [ ] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
 - [ ] **Optimization - Dead Code Elimination:** Pruning unreachable instructions.
 
-**Phase 3: The Backend (Planned)**
-- [ ] **Instruction Selection:** Mapping TAC operations to x86 instructions.
+**Phase 3: The Backend (In Progress)**
+- [x] **Instruction Selection:** Mapping TAC operations to x86 instructions.
 - [ ] **Register Allocation:** Implementing a Linear Scan Register Allocator.
 - [ ] **Code Emission:** Generating valid `.s` files assembled via GCC/NASM.
 
