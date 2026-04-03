@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 // ### TAC IR ###
 
 /// TAC Operand
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum Operand {
     /// TAC Variable
     Var(usize),
