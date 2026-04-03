@@ -6,6 +6,7 @@ use middle::desuger::LoweringContext;
 use printer::ast_printer::AstPrinter;
 use printer::ir_printer::IrPrinter;
 
+mod backend;
 mod frontend;
 mod middle;
 mod printer;
@@ -14,21 +15,21 @@ fn main() {
     // Tokenize program
     let lexer = Lexer::new(
         "
-int foo(int x, int y) {
+int foo(int x) {
  return x + 1;
 }
 
 int main() {
- int x = 1;
- int y = foo(x, 2);
+ int x = foo(0);
  {
    int x = 5;
  }
 
- if (x < y) {
-   return 0;
+ while (x <= 10) {
+    x = x + 1;
  }
- return 1;
+
+ return x;
 }
 ",
     );
@@ -51,12 +52,24 @@ int main() {
     let mut ast_printer = AstPrinter::new();
 
     println!("=== AST ===");
-    for decl in tu {
-        let _ = ast_printer.print_decl(&decl, &mut output);
+    for decl in &tu {
+        let _ = ast_printer.print_decl(decl, &mut output);
         println!("{}", output);
     }
 
     output.clear();
     let _ = IrPrinter::print_ir(&lowered_program, &mut output);
     println!("{}", output);
+
+    // Backend: compile TAC/CFG => x86-64 assembly
+    let x86_program = backend::pipeline::compile_program(&lowered_program);
+
+    println!("=== x86-64 Assembly (Intel syntax) ===");
+    println!("{}", x86_program);
+
+    // Write assembly to file
+    let out_path = std::path::Path::new("output.s");
+    backend::emit::emit_to_file(&x86_program, out_path).expect("Failed to write output.s");
+    println!("Assembly written to output.s");
+    println!("Assemble with: gcc -no-pie -o output output.s");
 }
