@@ -47,9 +47,13 @@ pub fn run() -> () {
 
     // Optimization passes if optimizations are enabled
     if cli.opt {
-        for (_, cfg) in ir.functions.iter_mut() {
-            run_local_optimizations(cfg);
-            eliminate_dead_code(cfg);
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for (_, cfg) in ir.functions.iter_mut() {
+                changed |= run_local_optimizations(cfg);
+                changed |= eliminate_dead_code(cfg);
+            }
         }
     }
 

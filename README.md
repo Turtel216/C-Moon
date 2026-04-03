@@ -27,7 +27,7 @@ The compiler is structured as a classic three-pass pipeline to separate language
 - [x] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
 - [x] **Optimization - Algebraic Simplification:** Replacing complex arithmetic with simpler, equivalent operations or identities.
 - [x] **Optimization - Constant Propagation:** Replacing variables with known constant values downstream.
-- [ ] **Optimization - Dead Code Elimination (Data-Flow):** Pruning instructions that compute unused values.
+- [x] **Optimization - Dead Code Elimination (Data-Flow):** Pruning instructions that compute unused values.
 - [ ] **Optimization - Unreachable Code Elimination (Control-Flow):** Removing basic blocks that have no incoming execution paths.
 
 **Phase 3: The Backend (In Progress)**
