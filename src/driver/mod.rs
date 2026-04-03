@@ -12,7 +12,7 @@ use crate::{
 mod cli;
 
 /// Assambly output
-const ASM_OUTPUT: &str = "super_secret_output_file.s";
+const ASM_OUTPUT: &str = "asm.s";
 
 // TODO: Add proper error reporting for parser and semantantic analysis errors
 
@@ -76,7 +76,10 @@ pub fn run() -> () {
     fs::write(out_path, asm_program).expect("Failed to write assembly to file");
 
     assamble_program(&cli.output_file);
-    clean_up();
+
+    if !cli.asm {
+        clean_up();
+    }
 }
 
 /// Produce executable through GCC

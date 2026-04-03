@@ -23,6 +23,10 @@ pub struct Cli {
     /// Pretty print IR
     #[arg(long, default_value_t = false)]
     pub printir: bool,
+
+    /// Output Assembly
+    #[arg(long, default_value_t = false)]
+    pub asm: bool,
 }
 
 /// Get command line arguments
