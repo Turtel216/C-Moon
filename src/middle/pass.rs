@@ -9,7 +9,7 @@ pub fn run_local_optimizations(cfg: &mut CFG) -> bool {
     let mut changed_any = false;
     let mut loop_changed = true;
 
-    // Keep running the trinity of passes until no more changes are made
+    // Keep running passes until no more changes are made
     while loop_changed {
         loop_changed = false;
 
@@ -22,9 +22,6 @@ pub fn run_local_optimizations(cfg: &mut CFG) -> bool {
 
             // Propagate constants (e.g. replace t1 with 10 downstream)
             loop_changed |= propagate_constants(block);
-
-            // Eliminate dead code (e.g. remove t1 = 10 if t1 is no longer used)
-            //loop_changed |= eliminate_dead_code_local(block);
         }
 
         changed_any |= loop_changed;

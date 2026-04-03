@@ -1,6 +1,11 @@
 int main() {
-    int x = 10;
-    int y = 20;
-    int z = (x + y) * 0;
-    return z;
+  int x = 5 + 2 + 2 * 7;
+
+  if (x < 0) {
+    x = 1;
+  } else {
+    x = 2;
+  }
+
+  return x;
 }

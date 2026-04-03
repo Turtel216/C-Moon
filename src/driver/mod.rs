@@ -6,7 +6,8 @@ use crate::{
     backend,
     frontend::{lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer},
     middle::{
-        constfold::constant_folding_pass, desuger::LoweringContext, pass::run_local_optimizations,
+        constfold::constant_folding_pass, dce::eliminate_dead_code, desuger::LoweringContext,
+        pass::run_local_optimizations,
     },
     printer::{ast_printer::AstPrinter, ir_printer::IrPrinter},
 };
@@ -48,6 +49,7 @@ pub fn run() -> () {
     if cli.opt {
         for (_, cfg) in ir.functions.iter_mut() {
             run_local_optimizations(cfg);
+            eliminate_dead_code(cfg);
         }
     }
 
