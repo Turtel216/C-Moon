@@ -24,7 +24,7 @@ The compiler is structured as a classic three-pass pipeline to separate language
 **Phase 2: The Middle-End (In Progress)**
 - [x] **IR Generation:** Lowering the AST into Three-Address Code (TAC).
 - [x] **Control Flow Graph (CFG):** Building basic blocks for optimization analysis.
-- [ ] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
+- [x] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
 - [ ] **Optimization - Dead Code Elimination:** Pruning unreachable instructions.
 
 **Phase 3: The Backend (In Progress)**
