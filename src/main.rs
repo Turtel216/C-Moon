@@ -2,6 +2,7 @@ use frontend::lexer::Lexer;
 use frontend::parser::Parser;
 use frontend::renamer::resolve_names;
 use frontend::semantic::SemanticAnalyzer;
+use middle::constfold::constant_folding_pass;
 use middle::desuger::LoweringContext;
 use printer::ast_printer::AstPrinter;
 use printer::ir_printer::IrPrinter;
@@ -15,21 +16,8 @@ fn main() {
     // Tokenize program
     let lexer = Lexer::new(
         "
-int foo(int x) {
- return x + 1;
-}
-
 int main() {
- int x = foo(0);
- {
-   int x = 5;
- }
-
- while (x <= 10) {
-    x = x + 1;
- }
-
- return x;
+ return 1 + 2;
 }
 ",
     );
@@ -46,7 +34,10 @@ int main() {
 
     // Desuger AST into IR
     let ctx = LoweringContext::new(&resolution_map);
-    let lowered_program = ctx.lower_program(&tu);
+    let mut lowered_program = ctx.lower_program(&tu);
+
+    // Constant folding
+    let _ = constant_folding_pass(&mut lowered_program);
 
     let mut output = String::new();
     let mut ast_printer = AstPrinter::new();

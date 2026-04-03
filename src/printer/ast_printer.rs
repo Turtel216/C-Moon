@@ -1,3 +1,4 @@
+//! Pretty Printer for C AST
 use crate::frontend::ast::*;
 use std::fmt::{self, Write};
 

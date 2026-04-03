@@ -1,3 +1,7 @@
+//! Pretty Printer for the CFG-TAC IR
+//!
+//! `Display` implementations that print the IR.
+
 use crate::middle::desuger::*;
 use crate::middle::ir::*;
 use core::fmt::Write;
