@@ -115,10 +115,8 @@ impl fmt::Display for X86Program {
     }
 }
 
-// ### File output ###
-
-/// Write the complete assembly program to a file.
-pub fn emit_to_file(program: &X86Program, path: &Path) -> io::Result<()> {
+/// Get the complete assembly program.
+pub fn emit_asm(program: &X86Program) -> String {
     let content = format!("{}", program);
-    fs::write(path, content)
+    content
 }

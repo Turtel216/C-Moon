@@ -69,9 +69,11 @@ pub fn run() -> () {
 
     // Emit x86 assembly
     let asm = backend::pipeline::compile_program(&ir);
+
     // Output assembly to file
     let out_path = std::path::Path::new(ASM_OUTPUT);
-    backend::emit::emit_to_file(&asm, out_path).expect("Failed to emit assembly");
+    let asm_program = backend::emit::emit_asm(&asm);
+    fs::write(out_path, asm_program).expect("Failed to write assembly to file");
 
     assamble_program(&cli.output_file);
     clean_up();
