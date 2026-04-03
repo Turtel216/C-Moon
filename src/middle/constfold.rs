@@ -9,7 +9,7 @@ use super::desuger::ProgramIr;
 
 /// Attempts to fold constant operands in place.
 /// Returns `true` if the instruction was successfully folded.
-fn fold_constants(instr: &mut TACInstruction) -> bool {
+pub fn fold_constants(instr: &mut TACInstruction) -> bool {
     // We only care about instructions where both arguments are immediate integers.
     let (val1, val2) = match (&instr.arg1, &instr.arg2) {
         (Some(Operand::ImmInt(v1)), Some(Operand::ImmInt(v2))) => (*v1, *v2),

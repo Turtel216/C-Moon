@@ -5,7 +5,9 @@ use cli::get_arguments;
 use crate::{
     backend,
     frontend::{lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer},
-    middle::{constfold::constant_folding_pass, desuger::LoweringContext},
+    middle::{
+        constfold::constant_folding_pass, desuger::LoweringContext, pass::run_local_optimizations,
+    },
     printer::{ast_printer::AstPrinter, ir_printer::IrPrinter},
 };
 
@@ -44,7 +46,9 @@ pub fn run() -> () {
 
     // Optimization passes if optimizations are enabled
     if cli.opt {
-        let _ = constant_folding_pass(&mut ir);
+        for (_, cfg) in ir.functions.iter_mut() {
+            run_local_optimizations(cfg);
+        }
     }
 
     let mut output = String::new();
