@@ -52,3 +52,21 @@ Run unit tests:
 ```bash
 cargo test
 ```
+
+The Compiler CLI:
+
+``` bash
+Usage: c-moon [OPTIONS] <SOURCE_FILE>
+
+Arguments:
+  <SOURCE_FILE>  The C source file
+
+Options:
+  -o <OUTPUT_FILE>  The output file [default: output]
+      --opt         Enable optimizations
+      --printast    Pretty print AST
+      --printir     Pretty print IR
+      --asm         Output Assembly
+  -h, --help        Print help
+```
+
