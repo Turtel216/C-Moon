@@ -1,12 +1,14 @@
+int add(int x, int y) { return x + y; }
+
 int main() {
-    int x = 5;
-    if (x < 10) {
-        x = 2;
-    } else {
-        x = 100;
+    int x = 10;
+    int y = 15;
+
+    if (x > 100) {
+        x = x + 1;
     }
 
-    int y = 10;
-    int z = x + y;
+    int z = add(x, y);
+
     return z;
 }

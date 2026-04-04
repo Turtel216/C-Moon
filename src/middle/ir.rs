@@ -368,9 +368,63 @@ impl CFG {
             loop_changed |= self.simplify_control_flow();
 
             loop_changed |= self.eliminate_dead_code();
+            loop_changed |= self.merge_basic_blocks();
             changed_any |= loop_changed;
         }
         changed_any
+    }
+
+    pub fn merge_basic_blocks(&mut self) -> bool {
+        let mut merge_candidate = None;
+
+        // Find a pair of blocks to merge
+        for (label, block) in &self.blocks {
+            if block.successors.len() == 1 {
+                let succ_label = &block.successors[0];
+
+                if let Some(succ_block) = self.blocks.get(succ_label) {
+                    if succ_block.predecessors.len() == 1 && succ_block.predecessors[0] == *label {
+                        if let Some(last_instr) = block.instructions.last() {
+                            if last_instr.opcode == Opcode::Jump {
+                                merge_candidate = Some((label.clone(), succ_label.clone()));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply the merge if we found a candidate
+        if let Some((block_a_label, block_b_label)) = merge_candidate {
+            // Extract Block B completely from the CFG
+            let mut block_b = self.blocks.remove(&block_b_label).unwrap();
+
+            // Clone the successors list to break the overlapping borrows
+            let successors_to_update = block_b.successors.clone();
+
+            // Scope the mutable borrow of Block A
+            if let Some(block_a) = self.blocks.get_mut(&block_a_label) {
+                block_a.instructions.pop();
+                block_a.instructions.append(&mut block_b.instructions);
+                block_a.successors = block_b.successors;
+            }
+
+            // Update the inherited successors safely
+            for succ_label in successors_to_update {
+                if let Some(succ_block) = self.blocks.get_mut(&succ_label) {
+                    for p in &mut succ_block.predecessors {
+                        if *p == block_b_label {
+                            *p = block_a_label.clone();
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        false
     }
 
     pub fn simplify_control_flow(&mut self) -> bool {
