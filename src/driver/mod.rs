@@ -5,10 +5,7 @@ use cli::get_arguments;
 use crate::{
     backend,
     frontend::{lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer},
-    middle::{
-        constfold::constant_folding_pass, dce::eliminate_dead_code, desuger::LoweringContext,
-        pass::run_local_optimizations,
-    },
+    middle::desuger::LoweringContext,
     printer::{ast_printer::AstPrinter, ir_printer::IrPrinter},
 };
 
@@ -47,14 +44,7 @@ pub fn run() -> () {
 
     // Optimization passes if optimizations are enabled
     if cli.opt {
-        let mut changed = true;
-        while changed {
-            changed = false;
-            for (_, cfg) in ir.functions.iter_mut() {
-                changed |= run_local_optimizations(cfg);
-                changed |= eliminate_dead_code(cfg);
-            }
-        }
+        ir.optimize();
     }
 
     let mut output = String::new();

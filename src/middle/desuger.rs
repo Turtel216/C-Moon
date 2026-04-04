@@ -17,6 +17,12 @@ impl ProgramIr {
             functions: BTreeMap::new(),
         }
     }
+
+    pub fn optimize(&mut self) -> () {
+        for (_, cfg) in self.functions.iter_mut() {
+            while !cfg.run_optimizations() {}
+        }
+    }
 }
 
 pub struct LoweringContext<'a> {
