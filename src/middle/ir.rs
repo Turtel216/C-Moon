@@ -365,10 +365,99 @@ impl CFG {
                 loop_changed |= block.propagate_constants();
             }
 
+            loop_changed |= self.simplify_control_flow();
+
             loop_changed |= self.eliminate_dead_code();
             changed_any |= loop_changed;
         }
         changed_any
+    }
+
+    pub fn simplify_control_flow(&mut self) -> bool {
+        let mut changed = false;
+
+        // Keep track of edges we severe: (FromBlock, ToBlock)
+        // This is needed so we can update the predecessors of the target blocks
+        // without violating mutable aliasing rules in the first pass.
+        let mut edges_to_remove: Vec<(String, String)> = Vec::new();
+
+        for (label, block) in self.blocks.iter_mut() {
+            let mut new_instructions = Vec::with_capacity(block.instructions.len());
+            let mut block_truncated = false;
+            let mut dead_successors = Vec::new();
+
+            for instr in &block.instructions {
+                // If a previous instruction became an unconditional jump,
+                // anything after it in the same basic block is locally dead code.
+                if block_truncated {
+                    continue;
+                }
+
+                // Handle BrIfNot (Branch if False)
+                if instr.opcode == Opcode::BranchIfNot {
+                    // Extract the condition from arg1
+                    if let Some(Operand::ImmInt(val)) = instr.arg1 {
+                        // 2. Extract the target label from arg2
+                        // (Change this to `instr.dest` if your parser puts labels there!)
+                        if let Some(Operand::Label(ref target)) = instr.arg2 {
+                            if val != 0 {
+                                // Condition is True. "br_if_not 1" means DO NOT branch.
+                                // The branch is dead. Drop the instruction.
+                                dead_successors.push(target.clone());
+                                changed = true;
+                                continue; // Skip pushing this instruction
+                            } else {
+                                // Condition is False. "br_if_not 0" means ALWAYS branch.
+                                // Rewrite into an unconditional Jump.
+                                let mut new_jmp = instr.clone();
+                                new_jmp.opcode = Opcode::Jump;
+                                new_jmp.arg1 = Some(Operand::Label(target.clone())); // Jumps usually take target in arg1
+                                new_jmp.arg2 = None;
+                                new_instructions.push(new_jmp);
+
+                                // Because we ALWAYS take this branch, any *other* successor
+                                // (like the fallthrough) is now dead.
+                                for succ in &block.successors {
+                                    if succ != target {
+                                        dead_successors.push(succ.clone());
+                                    }
+                                }
+
+                                changed = true;
+                                block_truncated = true;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                // TODO: add Opcode::BrIf
+
+                new_instructions.push(instr.clone());
+            }
+
+            if changed {
+                block.instructions = new_instructions;
+
+                // Remove dead targets from this block's successors
+                block.successors.retain(|s| !dead_successors.contains(s));
+
+                // Queue the predecessor cleanup for Phase 2
+                for dead_succ in dead_successors {
+                    edges_to_remove.push((label.clone(), dead_succ));
+                }
+            }
+        }
+
+        // Clean up the predecessors of the orphaned blocks
+        // This ensures the CFG is perfectly consistent before the DCE pass runs.
+        for (from_block, to_block) in edges_to_remove {
+            if let Some(target_block) = self.blocks.get_mut(&to_block) {
+                target_block.predecessors.retain(|p| p != &from_block);
+            }
+        }
+
+        changed
     }
 
     pub fn eliminate_dead_code(&mut self) -> bool {
@@ -496,12 +585,12 @@ impl CFG {
                 }
 
                 // If kept, update the live set.
-                // 1. Remove defined destination
+                // Remove defined destination
                 if let Some(d) = dest_var {
                     live.remove(&d);
                 }
 
-                // 2. Add used arguments
+                // Add used arguments
                 if let Some(u) = instr.arg1.as_ref().and_then(extract_var) {
                     live.insert(u);
                 }
