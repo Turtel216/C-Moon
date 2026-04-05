@@ -1,5 +1,3 @@
-int add(int x, int y) { return x + y; }
-
 int main() {
     int x = 10;
     int y = 15;
@@ -8,7 +6,9 @@ int main() {
         x = x + 1;
     }
 
-    int z = add(x, y);
+    int z = x + y;
 
     return z;
+
+    int g = 0;
 }

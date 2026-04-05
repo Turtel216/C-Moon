@@ -114,7 +114,7 @@ impl TACInstruction {
             Opcode::Mul => val1.wrapping_mul(val2),
             Opcode::Div => {
                 // Protect the compiler from a divide-by-zero panic during compilation.
-                // TODO: Print warning of div by zero for user
+                // TODO: Print warning of div by zero for user ?
                 if val2 == 0 {
                     return false;
                 }
@@ -346,6 +346,13 @@ impl CFG {
         }
     }
 
+    /// Runs the optmizations passes on the current CFG and returns ``false`` if no further has been applied
+    /// The optimizations applied to the CFG are:
+    ///   - Constant folding
+    ///   - Algebraic simplification
+    ///   - Constant propagation
+    ///   - Dead code elimination
+    ///   - Unreachable code elimination
     pub fn run_optimizations(&mut self) -> bool {
         let mut changed_any = false;
         let mut loop_changed = true;
@@ -374,6 +381,7 @@ impl CFG {
         changed_any
     }
 
+    /// Finds and merges code blocks what can me merged
     pub fn merge_basic_blocks(&mut self) -> bool {
         let mut merge_candidate = None;
 
@@ -517,6 +525,7 @@ impl CFG {
     pub fn eliminate_dead_code(&mut self) -> bool {
         let mut changed = false;
 
+        // TODO: useless ?
         // Unreachable Code Elimination (Control-Flow)
         // Perform reachability sweep starting from the CFG `entry` block
         let mut reachable = HashSet::new();
@@ -551,7 +560,7 @@ impl CFG {
         }
 
         // Global Data-Flow Analysis (Liveness)
-        // We implement a standard iterative data-flow algorithm to compute the `IN` and `OUT`
+        // A standard iterative data-flow algorithm to compute the `IN` and `OUT`
         // liveness sets for every BasicBlock.
 
         let mut use_sets: HashMap<String, HashSet<Operand>> = HashMap::new();
@@ -663,10 +672,12 @@ impl CFG {
         changed
     }
 
+    /// Add a ``BasicBlock`` to the ``CFG``
     pub fn add_block(&mut self, block: BasicBlock) {
         self.blocks.insert(block.label.clone(), block);
     }
 
+    /// AD an Edge to the ``CFG``
     pub fn add_edge(&mut self, from: &str, to: &str) {
         if let Some(f) = self.blocks.get_mut(from) {
             if !f.successors.iter().any(|s| s == to) {
@@ -681,7 +692,7 @@ impl CFG {
     }
 }
 
-// Function to get variables from an operand
+/// Function to get variables from an operand
 fn extract_var(op: &Operand) -> Option<Operand> {
     match op {
         Operand::Var(_) | Operand::Temp(_) => Some(op.clone()),
@@ -689,7 +700,7 @@ fn extract_var(op: &Operand) -> Option<Operand> {
     }
 }
 
-// Check if an instruction has side effects
+/// Check if an instruction has side effects
 fn has_side_effects(opcode: &Opcode) -> bool {
     matches!(
         opcode,

@@ -27,10 +27,10 @@ The compiler is structured as a classic three-pass pipeline to separate language
 - [x] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
 - [x] **Optimization - Algebraic Simplification:** Replacing complex arithmetic with simpler, equivalent operations or identities.
 - [x] **Optimization - Constant Propagation:** Replacing variables with known constant values downstream.
-- [x] **Optimization - Dead Code Elimination (Data-Flow):** Pruning instructions that compute unused values.
-- [ ] **Optimization - Unreachable Code Elimination (Control-Flow):** Removing basic blocks that have no incoming execution paths.
+- [x] **Optimization - Dead Code Elimination:** Pruning instructions that compute unused values.
+- [x] **Optimization - Unreachable Code Elimination:** Removing basic blocks that have no incoming execution paths.
 
-**Phase 3: The Backend (In Progress)**
+**Phase 3: The Backend (Done)**
 - [x] **Instruction Selection:** Mapping TAC operations to x86 instructions.
 - [x] **Register Allocation:** Implementing a Linear Scan Register Allocator.
 - [x] **Code Emission:** Generating valid `.s` files assembled via GCC.

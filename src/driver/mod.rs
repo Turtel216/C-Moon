@@ -1,3 +1,5 @@
+//! Compiler Driver.
+
 use std::{fs, process::Command};
 
 use cli::get_arguments;
@@ -11,11 +13,13 @@ use crate::{
 
 mod cli;
 
-/// Assambly output
+/// Assambly output file
 const ASM_OUTPUT: &str = "asm.s";
 
 // TODO: Add proper error reporting for parser and semantantic analysis errors
 
+/// Run the complete Compiler pipeline.
+/// Also Handles command line arguments.
 pub fn run() -> () {
     // Get command line arguments
     let cli = get_arguments();
@@ -82,7 +86,7 @@ pub fn run() -> () {
     }
 }
 
-/// Produce executable through GCC
+/// Invokes GCC on the ``ASM_OUTPUT`` file and produces the executable.
 fn assamble_program(output_path: &str) -> () {
     let _ = Command::new("gcc")
         .args(["-no-pie", "-o", output_path, ASM_OUTPUT])
@@ -90,6 +94,9 @@ fn assamble_program(output_path: &str) -> () {
         .expect("Failed to link program");
 }
 
+/// Clean up fils produces during compilation.
+/// Removes:
+///   - ``ASM_OUTPUT``
 fn clean_up() -> () {
     let _ = Command::new("rm")
         .arg(ASM_OUTPUT)

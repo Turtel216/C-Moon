@@ -1,3 +1,12 @@
+//! Responsible for desugering the AST into the IR
+//!
+//! The Optimizations that can be applied are:
+//!   - Constant folding
+//!   - Algebraic simplification
+//!   - Constant propagation
+//!   - Dead code elimination
+//!   - Unreachable code elimination
+
 use std::collections::BTreeMap;
 
 use crate::frontend::ast::{
@@ -6,8 +15,10 @@ use crate::frontend::ast::{
 use crate::frontend::renamer::ResolutionMap;
 use crate::middle::ir::*;
 
+/// Complete program IR representation
 #[derive(Debug, Clone)]
 pub struct ProgramIr {
+    /// Program Functions
     pub functions: BTreeMap<String, CFG>,
 }
 
@@ -18,6 +29,13 @@ impl ProgramIr {
         }
     }
 
+    /// Run the optmizations passes on the Program IR.
+    /// The optimizations applied to each ``CFG`` inside the ``ProgramIr`` are:
+    ///   - Constant folding
+    ///   - Algebraic simplification
+    ///   - Constant propagation
+    ///   - Dead code elimination
+    ///   - Unreachable code elimination
     pub fn optimize(&mut self) -> () {
         for (_, cfg) in self.functions.iter_mut() {
             while !cfg.run_optimizations() {}
@@ -25,9 +43,13 @@ impl ProgramIr {
     }
 }
 
+/// Context for AST to IR desugering
 pub struct LoweringContext<'a> {
+    /// Complete ProgramIr
     pub program: ProgramIr,
+    /// Resolution map used for conflicting identifiers
     res_map: &'a ResolutionMap,
+    /// Current ``CFG`` being lowered
     current_cfg: Option<CFG>,
     current_block: String,
     temp_counter: usize,
@@ -46,6 +68,7 @@ impl<'a> LoweringContext<'a> {
         }
     }
 
+    /// Desuger a list of AST ``Decl`` into the ``ProgramIr``
     pub fn lower_program(mut self, decls: &[Decl]) -> ProgramIr {
         for decl in decls {
             match &decl.kind {

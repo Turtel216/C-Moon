@@ -4,9 +4,6 @@
 //! A complete `.s` file can be obtained by printing an `X86Program`.
 
 use std::fmt;
-use std::fs;
-use std::io;
-use std::path::Path;
 
 use crate::backend::x86::*;
 

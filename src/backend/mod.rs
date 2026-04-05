@@ -1,3 +1,5 @@
+//! Compiler backend. Responsible for Code Generation.
+
 pub mod emit;
 pub mod liveness;
 pub mod lowering;
