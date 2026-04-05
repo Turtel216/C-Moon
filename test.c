@@ -1,5 +1,7 @@
+void foo() {}
+
 int main() {
-    int x = 10;
+    int x = foo();
     int y = 15;
 
     if (x > 100) {

@@ -53,7 +53,18 @@ pub fn run() -> () {
 
     // Semantic analysis
     let mut sem = SemanticAnalyzer::new();
-    sem.analyze_program(&ast).expect("semantic analysis failed");
+    match sem.analyze_program(&ast) {
+        Ok(_) => (),
+        Err(e) => {
+            diagnostics.report(e);
+            ()
+        }
+    }
+
+    if diagnostics.panic() {
+        diagnostics.print();
+        return;
+    }
 
     // Identifier Renaming
     let resolution_map = resolve_names(&ast).expect("Name resolution failed");

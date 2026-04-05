@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
+use crate::driver::diagnostics::CompilerError;
 use crate::frontend::ast::{
     BinaryOp, BlockItem, CType, Decl, DeclKind, Expr, ExprKind, Literal, ParamDecl, Stmt, StmtKind,
     UnaryOp,
@@ -49,6 +50,66 @@ pub enum SemanticError {
         found: usize,
         span: Span,
     },
+}
+
+impl CompilerError for SemanticError {
+    fn get_span(&self) -> Span {
+        match self {
+            SemanticError::UndeclaredVariable { span, .. } => *span,
+            SemanticError::RedeclaredVariable { span, .. } => *span,
+            SemanticError::UndeclaredFunction { span, .. } => *span,
+            SemanticError::RedeclaredFunction { span, .. } => *span,
+            SemanticError::ArgumentCountMismatch { span, .. } => *span,
+            SemanticError::TypeError { span, .. } => *span,
+            SemanticError::InvalidAssignmentTarget { span, .. } => *span,
+            SemanticError::UnsupportedType { span, .. } => *span,
+        }
+    }
+
+    fn get_message(&self) -> String {
+        match self {
+            SemanticError::UndeclaredVariable { name, .. } => {
+                format!("Undeclared variable '{}'", name)
+            }
+            SemanticError::RedeclaredVariable { name, .. } => {
+                format!("Redeclared variable '{}'", name)
+            }
+            SemanticError::UndeclaredFunction { name, .. } => {
+                format!("Undeclared function '{}'", name)
+            }
+            SemanticError::RedeclaredFunction { name, .. } => {
+                format!("Redeclared function '{}'", name)
+            }
+            SemanticError::ArgumentCountMismatch {
+                name,
+                expected,
+                found,
+                ..
+            } => format!(
+                "Argument count mismatch for function '{}'. Expected {} got {}",
+                name, expected, found
+            ),
+            SemanticError::TypeError {
+                // TODO: Probably wrong. Handle context correctly
+                expected,
+                found,
+                context,
+                ..
+            } => format!(
+                "{}. Expected type '{}' got type '{}'",
+                context, expected, found
+            ),
+            SemanticError::InvalidAssignmentTarget { .. } => format!("Invalid assignment"),
+            SemanticError::UnsupportedType { ty, context, .. } => {
+                // TODO: Probably wrong
+                format!("Unsupported type. {} {}", context, ty)
+            }
+        }
+    }
+
+    fn error_prefix(&self) -> String {
+        String::from("Type Error")
+    }
 }
 
 impl fmt::Display for SemanticError {

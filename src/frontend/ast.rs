@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::frontend::lexer::Span;
 
 pub type NodeId = u32;
@@ -121,6 +123,16 @@ pub enum CType {
     Pointer(Box<CType>),
     Array(Box<CType>, Option<usize>),
     Struct(String),
+}
+
+impl fmt::Display for CType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CType::Int => write!(f, "int"),
+            CType::Void => write!(f, "void"),
+            _ => todo!("Other types not supported yet"),
+        } // TODO: implement missing types
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
