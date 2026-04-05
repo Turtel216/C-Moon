@@ -12,6 +12,7 @@ use crate::{
 };
 
 mod cli;
+mod diagnostics;
 
 /// Assambly output file
 const ASM_OUTPUT: &str = "asm.s";
