@@ -29,7 +29,7 @@ impl Diagnostics {
 
     /// Check if a Compiler has accured and if the compilation proccess should be stoped.
     pub fn panic(&self) -> bool {
-        self.comp_errors.is_empty()
+        !self.comp_errors.is_empty()
     }
 
     /// Print Compilation errors to stdout
@@ -38,7 +38,7 @@ impl Diagnostics {
         for err in &self.comp_errors {
             let span = err.get_span();
             let message = format!(
-                "{} {}:{} {}",
+                "\x1b[31m{}\x1b[0m {}:{} {}",
                 err.error_prefix(),
                 span.line,
                 span.column,

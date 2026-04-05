@@ -1,3 +1,4 @@
+use crate::driver::diagnostics::CompilerError;
 use crate::frontend::ast::*;
 use crate::frontend::lexer::{Lexer, Span, Token, TokenKind};
 
@@ -5,6 +6,20 @@ use crate::frontend::lexer::{Lexer, Span, Token, TokenKind};
 pub struct ParseError {
     pub message: String,
     pub span: Span,
+}
+
+impl CompilerError for ParseError {
+    fn get_span(&self) -> Span {
+        self.span
+    }
+
+    fn get_message(&self) -> String {
+        self.message.clone()
+    }
+
+    fn error_prefix(&self) -> String {
+        String::from("Syntax Error")
+    }
 }
 
 type PResult<T> = Result<T, ParseError>;

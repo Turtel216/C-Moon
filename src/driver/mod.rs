@@ -3,16 +3,19 @@
 use std::{fs, process::Command};
 
 use cli::get_arguments;
+use diagnostics::Diagnostics;
 
 use crate::{
     backend,
-    frontend::{lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer},
+    frontend::{
+        ast::Expr, lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer,
+    },
     middle::desuger::LoweringContext,
     printer::{ast_printer::AstPrinter, ir_printer::IrPrinter},
 };
 
 mod cli;
-mod diagnostics;
+pub mod diagnostics;
 
 /// Assambly output file
 const ASM_OUTPUT: &str = "asm.s";
@@ -24,6 +27,7 @@ const ASM_OUTPUT: &str = "asm.s";
 pub fn run() -> () {
     // Get command line arguments
     let cli = get_arguments();
+    let mut diagnostics = Diagnostics::new();
 
     // Read source file
     // TODO: Dont crash the program when file not. Print proper message
@@ -34,7 +38,18 @@ pub fn run() -> () {
 
     // Parse Program
     let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
-    let ast = parser.parse_translation_unit().expect("parse failed");
+    let ast = match parser.parse_translation_unit() {
+        Ok(a) => a,
+        Err(err) => {
+            diagnostics.report(err);
+            Vec::new()
+        }
+    };
+
+    if diagnostics.panic() {
+        diagnostics.print();
+        return;
+    }
 
     // Semantic analysis
     let mut sem = SemanticAnalyzer::new();
