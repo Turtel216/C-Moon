@@ -7,9 +7,7 @@ use diagnostics::Diagnostics;
 
 use crate::{
     backend,
-    frontend::{
-        ast::Expr, lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer,
-    },
+    frontend::{lexer::Lexer, parser::Parser, renamer::resolve_names, semantic::SemanticAnalyzer},
     middle::desuger::LoweringContext,
     printer::{ast_printer::AstPrinter, ir_printer::IrPrinter},
 };
@@ -19,8 +17,6 @@ pub mod diagnostics;
 
 /// Assambly output file
 const ASM_OUTPUT: &str = "asm.s";
-
-// TODO: Add proper error reporting for parser and semantantic analysis errors
 
 /// Run the complete Compiler pipeline.
 /// Also Handles command line arguments.
@@ -36,8 +32,24 @@ pub fn run() -> () {
     // Tokenize program
     let lexer = Lexer::new(&source_program);
 
+    let mut parser = match Parser::from_lexer(lexer) {
+        Ok(p) => p,
+        Err(e) => {
+            diagnostics.report(e);
+            Parser {
+                tokens: Vec::new(),
+                pos: 0,
+                next_node_id: 0,
+            }
+        }
+    };
+
+    if diagnostics.panic() {
+        diagnostics.print();
+        return;
+    }
+
     // Parse Program
-    let mut parser = Parser::from_lexer(lexer).expect("lexing failed");
     let ast = match parser.parse_translation_unit() {
         Ok(a) => a,
         Err(err) => {

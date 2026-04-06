@@ -1,7 +1,9 @@
-void foo() {}
+int foo() { return 0; }
 
+// Comment
 int main() {
-    int x = foo();
+    char *f = "ffff ;
+        int x = foo();
     int y = 15;
 
     if (x > 100) {

@@ -25,9 +25,9 @@ impl CompilerError for ParseError {
 type PResult<T> = Result<T, ParseError>;
 
 pub struct Parser<'a> {
-    tokens: Vec<Token<'a>>,
-    pos: usize,
-    next_node_id: u32,
+    pub tokens: Vec<Token<'a>>,
+    pub pos: usize,
+    pub next_node_id: u32,
 }
 
 impl<'a> Parser<'a> {
