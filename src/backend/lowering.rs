@@ -64,7 +64,7 @@ impl LoweringContext {
             param_buffer: Vec::new(),
         };
 
-        ctx.emit_prologue(name);
+        ctx.emit_prologue();
 
         // Track which block labels we've already emitted so we insert
         // label pseudo-instructions at block boundaries.
@@ -99,11 +99,7 @@ impl LoweringContext {
         }
     }
 
-    fn emit_prologue(&mut self, name: &str) {
-        self.out.push(X86Instruction::Comment(format!(
-            "--- {} prologue ---",
-            name
-        )));
+    fn emit_prologue(&mut self) {
         self.out
             .push(X86Instruction::Push(X86Operand::Reg(X86Register::Rbp)));
         self.out.push(X86Instruction::Mov(

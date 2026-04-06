@@ -123,7 +123,7 @@ pub fn run() -> () {
     }
 }
 
-/// Invokes GCC on the ``ASM_OUTPUT`` file and produces the executable.
+/// Invokes GCC on the ``asm_output`` file and produces the executable.
 fn assamble_program(output_path: &str, asm_output: &str) -> () {
     let _ = Command::new("gcc")
         .args(["-no-pie", "-o", output_path, asm_output])
@@ -133,7 +133,7 @@ fn assamble_program(output_path: &str, asm_output: &str) -> () {
 
 /// Clean up fils produces during compilation.
 /// Removes:
-///   - ``ASM_OUTPUT``
+///   - ``asm_output``
 fn clean_up(asm_output: &str) -> () {
     let _ = Command::new("rm")
         .arg(asm_output)

@@ -4,7 +4,6 @@
 .globl main
 .type main, @function
 main:
-    # --- main prologue ---
     push rbp
     mov rbp, rsp
 .main_entry:
