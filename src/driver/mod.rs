@@ -15,9 +15,6 @@ use crate::{
 mod cli;
 pub mod diagnostics;
 
-/// Assambly output file
-const ASM_OUTPUT: &str = "asm.s";
-
 /// Run the complete Compiler pipeline.
 /// Also Handles command line arguments.
 pub fn run() -> () {
@@ -114,21 +111,22 @@ pub fn run() -> () {
     let asm = backend::pipeline::compile_program(&ir);
 
     // Output assembly to file
-    let out_path = std::path::Path::new(ASM_OUTPUT);
+    let asm_output = format!("{}.s", cli.output_file);
+    let out_path = std::path::Path::new(&asm_output);
     let asm_program = backend::emit::emit_asm(&asm);
     fs::write(out_path, asm_program).expect("Failed to write assembly to file");
 
-    assamble_program(&cli.output_file);
+    assamble_program(&cli.output_file, &asm_output);
 
     if !cli.asm {
-        clean_up();
+        clean_up(&asm_output);
     }
 }
 
 /// Invokes GCC on the ``ASM_OUTPUT`` file and produces the executable.
-fn assamble_program(output_path: &str) -> () {
+fn assamble_program(output_path: &str, asm_output: &str) -> () {
     let _ = Command::new("gcc")
-        .args(["-no-pie", "-o", output_path, ASM_OUTPUT])
+        .args(["-no-pie", "-o", output_path, asm_output])
         .output()
         .expect("Failed to link program");
 }
@@ -136,9 +134,9 @@ fn assamble_program(output_path: &str) -> () {
 /// Clean up fils produces during compilation.
 /// Removes:
 ///   - ``ASM_OUTPUT``
-fn clean_up() -> () {
+fn clean_up(asm_output: &str) -> () {
     let _ = Command::new("rm")
-        .arg(ASM_OUTPUT)
+        .arg(asm_output)
         .output()
         .expect("Failed to delete intermediete files");
 }
