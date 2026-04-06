@@ -21,7 +21,7 @@ The compiler is structured as a classic three-pass pipeline to separate language
 - [x] **Semantic Analysis:** Symbol table generation, variable scoping, and basic type checking.
 - [x] **Renamer:** Name resolution (Scope Renamer) pass.
 
-**Phase 2: The Middle-End (In Progress)**
+**Phase 2: The Middle-End (In progress)**
 - [x] **IR Generation:** Lowering the AST into Three-Address Code (TAC).
 - [x] **Control Flow Graph (CFG):** Building basic blocks for optimization analysis.
 - [x] **Optimization - Constant Folding:** Evaluating static expressions at compile time.
@@ -34,6 +34,8 @@ The compiler is structured as a classic three-pass pipeline to separate language
 - [x] **Instruction Selection:** Mapping TAC operations to x86 instructions.
 - [x] **Register Allocation:** Implementing a Linear Scan Register Allocator.
 - [x] **Code Emission:** Generating valid `.s` files assembled via GCC.
+
+**Phase 4: Support more C language features (In Progress)**
 
 ## Supported Language Subset (Target)
 

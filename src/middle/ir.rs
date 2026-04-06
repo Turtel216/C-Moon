@@ -493,7 +493,43 @@ impl CFG {
                     }
                 }
 
-                // TODO: add Opcode::BrIf
+                // Handle BrIf (Branch if True)
+                if instr.opcode == Opcode::BranchIf {
+                    // Extract the condition from arg1
+                    if let Some(Operand::ImmInt(val)) = instr.arg1 {
+                        // Extract the target label from arg2
+                        // (Change this to `instr.dest` if your parser puts labels there!)
+                        if let Some(Operand::Label(ref target)) = instr.arg2 {
+                            if val == 0 {
+                                // Condition is True. "br_if 0" means DO NOT branch.
+                                // The branch is dead. Drop the instruction.
+                                dead_successors.push(target.clone());
+                                changed = true;
+                                continue; // Skip pushing this instruction
+                            } else {
+                                // Condition is False. "br_if 1" means ALWAYS branch.
+                                // Rewrite into an unconditional Jump.
+                                let mut new_jmp = instr.clone();
+                                new_jmp.opcode = Opcode::Jump;
+                                new_jmp.arg1 = Some(Operand::Label(target.clone())); // Jumps usually take target in arg1
+                                new_jmp.arg2 = None;
+                                new_instructions.push(new_jmp);
+
+                                // Because we ALWAYS take this branch, any *other* successor
+                                // (like the fallthrough) is now dead.
+                                for succ in &block.successors {
+                                    if succ != target {
+                                        dead_successors.push(succ.clone());
+                                    }
+                                }
+
+                                changed = true;
+                                block_truncated = true;
+                                continue;
+                            }
+                        }
+                    }
+                }
 
                 new_instructions.push(instr.clone());
             }

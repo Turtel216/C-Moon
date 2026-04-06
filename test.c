@@ -1,18 +1,17 @@
-int foo() { return 0; }
-
 // Comment
 int main() {
-    char *f = "ffff ;
-        int x = foo();
+    int x = 5;
     int y = 15;
 
-    if (x > 100) {
-        x = x + 1;
+    if (x > 50) {
+        x = 0;
+    } else if (x == 2) {
+        x = 2;
+    } else {
+        x = 10;
     }
 
     int z = x + y;
 
     return z;
-
-    int g = 0;
 }
