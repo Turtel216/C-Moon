@@ -6,7 +6,7 @@ This project is an educational compiler designed to compile a strict subset of t
 
 ## Architecture
 
-The compiler is structured as a classic three-pass pipeline to separate language semantics from machine architecture:
+The compiler is structured as a classic three-phase pipeline to separate language semantics from machine architecture:
 
 1. **Frontend:** A hand-rolled Lexer and Recursive Descent Parser that construct an Abstract Syntax Tree (AST), followed by semantic analysis for type and scope checking and a .
 2. **Middle-End:** Lowers the AST into a linear, architecture-independent Three-Address Code (TAC) IR. This phase is responsible for target-independent optimizations.
