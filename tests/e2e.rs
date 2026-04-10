@@ -366,3 +366,29 @@ fn test_not_equal_with_opt() {
     ";
     run_e2e_test_with_opt("test_not_equal_with_opt", code, 1);
 }
+
+#[test]
+fn test_complex_expression() {
+    let code = "
+        int main() {
+            int a = 1;
+            int b = 2;
+            int c = 2;
+            return c * b + 10 - a * 2;
+        }
+    ";
+    run_e2e_test("test_complex_expression", code, 12);
+}
+
+#[test]
+fn test_complex_expression_with_opt() {
+    let code = "
+        int main() {
+            int a = 1;
+            int b = 2;
+            int c = 2;
+            return c * b + 10 - a * 2;
+        }
+    ";
+    run_e2e_test_with_opt("test_not_equal_with_opt", code, 12);
+}

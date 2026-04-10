@@ -1,14 +1,9 @@
 int main() {
-    int x = 5;
-    int y = 10;
+    int a = 2;
 
-    if (x > 10) {
-        x = 0;
-    } else {
-        x = 15;
+    while (a != 2) {
+        a = a + 1;
     }
 
-    int z = x + y;
-
-    return z;
+    return a + 1;
 }
